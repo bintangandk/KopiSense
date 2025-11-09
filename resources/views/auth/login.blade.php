@@ -25,7 +25,7 @@
         rel="stylesheet" />
 
     <!-- Icons. Uncomment required icon fonts -->
-    <link rel="stylesheet" href="assets/vendor/fonts/boxicons.css" />
+    <link rel="stylesheet" href="{{ asset('assets/vendor/fonts/boxicons.css') }}" />
 
     <!-- Core CSS -->
     <link rel="stylesheet" href="{{ asset('assets/vendor/css/core.css') }}" class="template-customizer-core-css" />
@@ -131,10 +131,7 @@
 
     <!-- / Content -->
 
-    <div class="buy-now">
-        <a href="https://themeselection.com/products/sneat-bootstrap-html-admin-template/" target="_blank"
-            class="btn btn-danger btn-buy-now">Upgrade to Pro</a>
-    </div>
+
 
     <!-- Core JS -->
     <!-- build:js assets/vendor/js/core.js -->
