@@ -22,6 +22,11 @@ Route::get('/register', function () {
     return view('auth.register');
 })->name('register');
 
+Route::get('/forgot-password', function () {
+    return view('auth.forgot-password');
+})->name('forgot-password');
+
+
 // Dashboard
 Route::get('/dashboard', function () {
     return view('pages.dashboard');
