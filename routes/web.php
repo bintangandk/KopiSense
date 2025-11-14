@@ -14,11 +14,15 @@ use Illuminate\Support\Facades\Route;
 */
 
 //auth routes
-Route::get('/login', function () {
+Route::get('/', function () {
     return view(('auth.login'));
 })->name('login');
 
+Route::get('/register', function () {
+    return view('auth.register');
+})->name('register');
+
 // Dashboard
-Route::get('/', function () {
+Route::get('/dashboard', function () {
     return view('pages.dashboard');
 })->name('dashboard');
