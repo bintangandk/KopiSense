@@ -29,5 +29,5 @@ Route::get('/forgot-password', function () {
 
 // Dashboard
 Route::get('/dashboard', function () {
-    return view('pages.dashboard');
+    return view('pages.dashboard.index');
 })->name('dashboard');
