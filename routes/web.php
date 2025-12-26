@@ -31,3 +31,8 @@ Route::get('/forgot-password', function () {
 Route::get('/dashboard', function () {
     return view('pages.dashboard.index');
 })->name('dashboard');
+
+// Profile
+Route::get('/profile', function () {
+    return view('pages.profile.index');
+})->name('profile');
