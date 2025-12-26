@@ -36,3 +36,8 @@ Route::get('/dashboard', function () {
 Route::get('/profile', function () {
     return view('pages.profile.index');
 })->name('profile');
+
+// Data Users
+Route::get('/data-user', function () {
+    return view('pages.dataUser.index');
+})->name('data-user');
