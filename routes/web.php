@@ -15,15 +15,15 @@ use Illuminate\Support\Facades\Route;
 
 //auth routes
 Route::get('/', function () {
-    return view(('auth.login'));
+    return view(('auth.login.index'));
 })->name('login');
 
 Route::get('/register', function () {
-    return view('auth.register');
+    return view('auth.register.index');
 })->name('register');
 
 Route::get('/forgot-password', function () {
-    return view('auth.forgot-password');
+    return view('auth.forgot-password.index');
 })->name('forgot-password');
 
 
