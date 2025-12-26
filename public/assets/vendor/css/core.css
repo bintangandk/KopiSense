@@ -15,8 +15,8 @@
   --bs-gray-dark: rgba(67, 89, 113, 0.8);
   --bs-gray-25: rgba(67, 89, 113, 0.025);
   --bs-gray-50: rgba(67, 89, 113, 0.05);
-  --bs-primary: #696cff;
-  --bs-secondary: #8592a3;
+  --bs-primary: #00704A;
+  --bs-secondary: #00A36C;
   --bs-success: #71dd37;
   --bs-info: #03c3ec;
   --bs-warning: #ffab00;
@@ -224,11 +224,11 @@ sup {
 }
 
 a {
-  color: #696cff;
+  color: #00704A;
   text-decoration: none;
 }
 a:hover {
-  color: #5f61e6;
+  color: #00704A;
 }
 
 a:not([href]):not([class]), a:not([href]):not([class]):hover {
@@ -5558,7 +5558,7 @@ textarea.form-control-lg {
 }
 
 .link-primary {
-  color: #696cff;
+  color: #00704A;
 }
 .link-primary:hover, .link-primary:focus {
   color: #5f61e6;

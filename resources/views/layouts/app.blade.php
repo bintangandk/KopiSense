@@ -52,13 +52,13 @@
     <div class="layout-wrapper layout-content-navbar">
         <div class="layout-container">
             <!-- Menu -->
-            @include('components.sidebar')
+            @include('components.shared.sidebar')
             <!-- / Menu -->
 
             <!-- Layout container -->
             <div class="layout-page">
                 <!-- Navbar -->
-                @include('components.navbar')
+                @include('components.shared.navbar')
                 <!-- / Navbar -->
 
                 <!-- Content wrapper -->
@@ -68,7 +68,7 @@
                     <!-- / Content -->
 
                     <!-- Footer -->
-                    @include('components.footer')
+                    @include('components.shared.footer')
                     <!-- / Footer -->
 
                     <div class="content-backdrop fade"></div>

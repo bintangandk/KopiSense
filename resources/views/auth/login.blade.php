@@ -9,7 +9,7 @@
         content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
 
     <title>
-        Login Basic - Pages | Sneat - Bootstrap 5 HTML Admin Template - Pro
+        Login
     </title>
 
     <meta name="description" content="" />
@@ -25,7 +25,7 @@
         rel="stylesheet" />
 
     <!-- Icons. Uncomment required icon fonts -->
-    <link rel="stylesheet" href="assets/vendor/fonts/boxicons.css" />
+    <link rel="stylesheet" href="{{ asset('assets/vendor/fonts/boxicons.css') }}" />
 
     <!-- Core CSS -->
     <link rel="stylesheet" href="{{ asset('assets/vendor/css/core.css') }}" class="template-customizer-core-css" />
@@ -42,8 +42,6 @@
     <!-- Helpers -->
     <script src="{{ asset('assets/vendor/js/helpers.js') }}"></script>
 
-    <!--! Template customizer & Theme config files MUST be included after core stylesheets and helpers.js in the <head> section -->
-    <!--? Config:  Mandatory theme config file contain global vars & default theme options, Set your preferred theme option in this file.  -->
     <script src="{{ asset('assets/js/config.js') }}"></script>
 
     <style>
@@ -89,7 +87,7 @@
                             <div class="mb-3 form-password-toggle">
                                 <div class="d-flex justify-content-between">
                                     <label class="form-label" for="password">Password</label>
-                                    <a href="auth-forgot-password-basic.html">
+                                    <a href="{{ route('forgot-password') }}">
                                         <small>Forgot Password?</small>
                                     </a>
                                 </div>
@@ -118,7 +116,7 @@
 
                         <p class="text-center">
                             <span>New on our platform?</span>
-                            <a href="auth-register-basic.html">
+                            <a href="{{ route('register') }}">
                                 <span>Create an account</span>
                             </a>
                         </p>
@@ -131,10 +129,7 @@
 
     <!-- / Content -->
 
-    <div class="buy-now">
-        <a href="https://themeselection.com/products/sneat-bootstrap-html-admin-template/" target="_blank"
-            class="btn btn-danger btn-buy-now">Upgrade to Pro</a>
-    </div>
+
 
     <!-- Core JS -->
     <!-- build:js assets/vendor/js/core.js -->

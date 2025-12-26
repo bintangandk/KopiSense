@@ -96,7 +96,7 @@
 }
 
 .text-primary {
-  color: #696cff !important;
+  color: #005C3D !important;
 }
 
 .text-body[href]:hover {
@@ -112,12 +112,12 @@ a.bg-primary:hover, a.bg-primary:focus {
 }
 
 .dropdown-notifications-item:not(.mark-as-read) .dropdown-notifications-read span {
-  background-color: #696cff;
+  background-color: #00704A;
 }
 
 .bg-label-primary {
   background-color: #e7e7ff !important;
-  color: #696cff !important;
+  color: #00704A !important;
 }
 
 .border-label-primary {
@@ -207,20 +207,20 @@ button.list-group-item-primary.active {
 
 .btn-primary {
   color: #fff;
-  background-color: #696cff;
-  border-color: #696cff;
+  background-color: #00704A;
+  border-color: #005C3D;
   box-shadow: 0 0.125rem 0.25rem 0 rgba(105, 108, 255, 0.4);
 }
 .btn-primary:hover {
   color: #fff;
-  background-color: #5f61e6;
-  border-color: #5f61e6;
+  background-color: #00704A;
+  border-color: #005C3D;
   transform: translateY(-1px);
 }
 .btn-check:focus + .btn-primary, .btn-primary:focus, .btn-primary.focus {
   color: #fff;
-  background-color: #5f61e6;
-  border-color: #5f61e6;
+  background-color: #00704A;
+  border-color: #005C3D;
   transform: translateY(0);
   box-shadow: none;
 }
@@ -307,25 +307,25 @@ button.list-group-item-primary.active {
 
 .form-control:focus,
 .form-select:focus {
-  border-color: #696cff;
+  border-color: #00A36C;
 }
 
 .input-group:focus-within .form-control,
 .input-group:focus-within .input-group-text {
-  border-color: #696cff;
+  border-color: #00A36C;
 }
 
 .form-check-input:focus {
-  border-color: #696cff;
+  border-color: #00704A;
   box-shadow: 0 2px 4px 0 rgba(105, 108, 255, 0.4);
 }
 .form-check-input:disabled {
   background-color: #eceef1;
 }
 .form-check-input:checked, .form-check-input[type=checkbox]:indeterminate {
-  background-color: #696cff;
-  border-color: #696cff;
-  box-shadow: 0 2px 4px 0 rgba(105, 108, 255, 0.4);
+  background-color: #00704A;
+  border-color: #005C3D;
+  box-shadow: 0 2px 8px 0 rgba(0, 112, 74, 0.25);
 }
 
 .custom-option.checked {
@@ -340,7 +340,7 @@ button.list-group-item-primary.active {
 }
 
 .form-control:focus ~ .form-label {
-  border-color: #696cff;
+  border-color: #00704A;
 }
 .form-control:focus ~ .form-label::after {
   border-color: inherit;
@@ -535,16 +535,16 @@ button.list-group-item-primary.active {
 }
 
 .form-floating > .form-control:not(:-moz-placeholder-shown) ~ label {
-  color: #696cff;
+  color: #00704A;
 }
 
 .form-floating > .form-control:focus ~ label,
 .form-floating > .form-control:not(:placeholder-shown) ~ label,
 .form-floating > .form-select ~ label {
-  color: #696cff;
+  color: #00704A;
 }
 .form-floating > .form-control:-webkit-autofill ~ label {
-  color: #696cff;
+  color: #00704A;
 }
 
 .svg-illustration svg {
@@ -557,7 +557,7 @@ html[dir=rtl] .border-primary {
 }
 
 a {
-  color: #696cff;
+  color: #00704A;
 }
 a:hover {
   color: #787bff;
@@ -650,7 +650,7 @@ a:hover {
 
 .bg-menu-theme {
   background-color: #fff !important;
-  color: #697a8d;
+  color: #E6F6EF;
 }
 .bg-menu-theme .menu-link,
 .bg-menu-theme .menu-horizontal-prev,
@@ -662,12 +662,12 @@ a:hover {
 .bg-menu-theme .menu-horizontal-prev:focus,
 .bg-menu-theme .menu-horizontal-next:hover,
 .bg-menu-theme .menu-horizontal-next:focus {
-  color: #566a7f;
+  color: #005C3D;
 }
 .bg-menu-theme .menu-link.active,
 .bg-menu-theme .menu-horizontal-prev.active,
 .bg-menu-theme .menu-horizontal-next.active {
-  color: #566a7f;
+  color: #005C3D;
 }
 .bg-menu-theme .menu-item.disabled .menu-link,
 .bg-menu-theme .menu-horizontal-prev.disabled,
@@ -748,11 +748,11 @@ html:not(.layout-menu-collapsed) .bg-menu-theme .menu-inner .menu-item .menu-lin
   color: #696cff;
 }
 .bg-menu-theme .menu-inner > .menu-item.active > .menu-link {
-  color: #696cff;
+  color: #00704A;
   background-color: rgba(105, 108, 255, 0.16) !important;
 }
 .bg-menu-theme .menu-inner > .menu-item.active:before {
-  background: #696cff;
+  background: #00704A;
 }
 .bg-menu-theme .menu-sub > .menu-item > .menu-link:before {
   background-color: #b4bdc6 !important;
@@ -763,7 +763,7 @@ html:not(.layout-menu-collapsed) .bg-menu-theme .menu-inner .menu-item .menu-lin
 }
 
 .app-brand .layout-menu-toggle {
-  background-color: #696cff;
+  background-color: #00704A;
   border: 7px solid #f5f5f9;
 }
 .app-brand .layout-menu-toggle i {
