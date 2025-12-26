@@ -6332,14 +6332,14 @@ label.btn {
 }
 
 .btn-outline-secondary {
-  color: #8592a3;
-  border-color: #8592a3;
+  color: #c2c2c2;
+  border-color: #c2c2c2;
   background: transparent;
 }
 .btn-outline-secondary:hover {
   color: #fff;
-  background-color: #788393;
-  border-color: #788393;
+  background-color: #00A36C;
+  border-color: #00A36C;
   box-shadow: 0 0.125rem 0.25rem 0 rgba(133, 146, 163, 0.4);
   transform: translateY(-1px);
 }
