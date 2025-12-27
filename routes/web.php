@@ -41,3 +41,8 @@ Route::get('/profile', function () {
 Route::get('/data-user', function () {
     return view('pages.dataUser.index');
 })->name('data-user');
+
+// Censor Data
+Route::get('/censor-data/temperature', function () {
+    return view('pages.censorData.temperature.index');
+})->name('censor-data.temperature');

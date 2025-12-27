@@ -21,10 +21,6 @@
           name: '2021',
           data: [18, 7, 15, 29, 18, 12, 9]
         },
-        {
-          name: '2020',
-          data: [-13, -18, -9, -14, -5, -17, -15]
-        }
       ],
       chart: {
         height: 300,
@@ -78,7 +74,7 @@
         }
       },
       xaxis: {
-        categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+        categories: ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'],
         labels: {
           style: {
             fontSize: '13px',

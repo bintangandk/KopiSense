@@ -77,8 +77,8 @@
                 </div>
             </a>
             <ul class="menu-sub">
-                <li class="menu-item">
-                    <a href="#" class="menu-link">
+                <li class="menu-item {{ request()->routeIs('censor-data.temperature') ? 'active' : '' }}">
+                    <a href="{{ route('censor-data.temperature') }}" class="menu-link">
                         <div data-i18n="Account">Data Suhu</div>
                     </a>
                 </li>
