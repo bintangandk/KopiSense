@@ -82,8 +82,8 @@
                         <div data-i18n="Account">Data Suhu</div>
                     </a>
                 </li>
-                <li class="menu-item">
-                    <a href="#" class="menu-link">
+                <li class="menu-item {{ request()->routeIs('censor-data.humidity') ? 'active' : '' }}">
+                    <a href="{{ route('censor-data.humidity') }}" class="menu-link">
                         <div data-i18n="Notifications">
                             Data Kelembaban
                         </div>

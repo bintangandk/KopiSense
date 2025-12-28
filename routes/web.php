@@ -46,3 +46,7 @@ Route::get('/data-user', function () {
 Route::get('/censor-data/temperature', function () {
     return view('pages.censorData.temperature.index');
 })->name('censor-data.temperature');
+
+Route::get('/censor-data/humidity', function () {
+    return view('pages.censorData.humidity.index');
+})->name('censor-data.humidity');
