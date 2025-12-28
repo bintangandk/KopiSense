@@ -7,15 +7,16 @@
             <div class="card-body pb-0">
                 <div class="row mb-3">
                     <div class="col-md-3 d-flex gap-2">
-                        <input type="text" class="form-control" id="searchInput" placeholder="Cari nama, no hp..." />
-                        <button type="button" class="btn btn-outline-secondary" id="refreshBtn" title="Refresh">
-                            <i class="bx bx-refresh"></i>
-                        </button>
+                        <!-- Search Input -->
+                        <x-ui.searchInput.index placeholder="Cari data anggota..." class="mb-4" />
+
+                        {{-- Refresh Button --}}
+                        <x-ui.buttonRefresh.index id="refreshCDataUser" class="mb-3" />
                     </div>
                     <div class="col-md-9 d-flex justify-content-end">
-                        <button type="button" class="btn btn-primary">
-                            <i class="bx bx-plus"></i>Tambah Anggota
-                        </button>
+                        {{-- Add Button --}}
+                        <x-ui.button.index variant="primary" icon="bx bx-plus">Tambah
+                            Anggota</x-ui.button.index>
                     </div>
                 </div>
             </div>
@@ -30,7 +31,7 @@
                             <th>Aksi</th>
                         </tr>
                     </thead>
-                    <tbody id="tableBody">
+                    <tbody id="tableBodyUser">
                         <tr>
                             <th scope="row">1</th>
                             <td>F Jonh Kenedy</td>
@@ -121,12 +122,17 @@
                 </table>
             </div>
             {{-- Pagination --}}
-            @include('components.ui.pagination.index')
+            <x-ui.pagination.index id="paginationUser" />
             {{-- /Pagination --}}
         </div>
     </div>
 
     <script>
+        // Pagination Class
+        document.addEventListener('DOMContentLoaded', function() {
+            const userPaginator = new TablePaginator('tableBodyUser', 'paginationUser', 5);
+        });
+
         document.getElementById('searchInput').addEventListener('keyup', function() {
             const searchValue = this.value.toLowerCase();
             filteredRows.length = 0;

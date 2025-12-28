@@ -1,7 +1,10 @@
+@props(['id'])
+
 <div class="card-body pt-3">
     <div class="d-flex justify-content-end">
         <nav aria-label="Page navigation">
-            <ul class="pagination mb-0" id="pagination">
+            {{-- Kita tempelkan ID yang diterima ke ul --}}
+            <ul {{ $attributes->merge(['class' => 'pagination mb-0', 'id' => $id]) }}>
                 <li class="page-item prev">
                     <a class="page-link" href="javascript:void(0);">
                         <i class="tf-icon bx bx-chevron-left"></i> Previous
@@ -18,90 +21,128 @@
 </div>
 
 <script>
-    const itemsPerPage = 5;
-    let currentPage = 1;
-    const allRows = [];
-    const filteredRows = [];
+    // Cek agar Class tidak dideklarasikan ulang jika component di-include berkali-kali
+    if (typeof TablePaginator === 'undefined') {
+        class TablePaginator {
+            constructor(tableBodyId, paginationId, itemsPerPage = 5) {
+                this.tableBody = document.getElementById(tableBodyId);
+                this.paginationContainer = document.getElementById(paginationId);
+                this.itemsPerPage = itemsPerPage;
+                this.currentPage = 1;
+                this.allRows = []; // Menyimpan semua data asli
+                this.filteredRows = []; // Menyimpan data hasil search
 
-    function initPagination() {
-        const tableBody = document.getElementById('tableBody');
-        allRows.length = 0;
-        tableBody.querySelectorAll('tr').forEach(row => {
-            allRows.push(row.cloneNode(true));
-        });
-        filteredRows.length = 0;
-        filteredRows.push(...allRows);
-        renderPagination();
-        renderTable();
-    }
+                if (!this.tableBody || !this.paginationContainer) {
+                    console.error("Element ID not found:", tableBodyId, paginationId);
+                    return;
+                }
 
-    function renderTable() {
-        const tableBody = document.getElementById('tableBody');
-        tableBody.innerHTML = '';
+                // Simpan semua baris asli saat inisialisasi
+                this.tableBody.querySelectorAll('tr').forEach(row => {
+                    this.allRows.push(row.cloneNode(true));
+                });
 
-        const startIndex = (currentPage - 1) * itemsPerPage;
-        const endIndex = startIndex + itemsPerPage;
-        const visibleRows = filteredRows.slice(startIndex, endIndex);
+                // Awalnya, filteredRows sama dengan semua data
+                this.filteredRows = [...this.allRows];
 
-        visibleRows.forEach(row => {
-            tableBody.appendChild(row.cloneNode(true));
-        });
-    }
+                this.init();
+            }
 
-    function renderPagination() {
-        const pagination = document.getElementById('pagination');
-        const totalPages = Math.ceil(filteredRows.length / itemsPerPage);
+            init() {
+                this.renderTable();
+                this.renderPagination();
+            }
 
-        // Remove existing page numbers
-        const pageItems = pagination.querySelectorAll('.page-item.page-num');
-        pageItems.forEach(item => item.remove());
+            // Method Baru: Untuk menangani Search
+            search(keyword) {
+                const lowerKeyword = keyword.toLowerCase();
 
-        // Add page numbers before next button
-        const nextBtn = pagination.querySelector('.next');
-        for (let i = 1; i <= totalPages; i++) {
-            const li = document.createElement('li');
-            li.className = 'page-item page-num' + (i === currentPage ? ' active' : '');
-            li.innerHTML = `<a class="page-link" href="javascript:void(0);">${i}</a>`;
-            li.addEventListener('click', () => {
-                currentPage = i;
-                renderTable();
-                renderPagination();
-                window.scrollTo(0, 0);
-            });
-            pagination.insertBefore(li, nextBtn);
+                // Filter dari allRows, simpan ke filteredRows
+                this.filteredRows = this.allRows.filter(row => {
+                    return row.textContent.toLowerCase().includes(lowerKeyword);
+                });
+
+                this.currentPage = 1; // Reset ke halaman 1 setiap kali search
+                this.updateView();
+            }
+
+            // Method Baru: Untuk menangani Refresh
+            refresh() {
+                this.filteredRows = [...this.allRows]; // Kembalikan ke data asli
+                this.currentPage = 1;
+                this.updateView();
+            }
+
+            renderTable() {
+                this.tableBody.innerHTML = '';
+                const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+                const endIndex = startIndex + this.itemsPerPage;
+
+                // Render dari filteredRows, bukan allRows
+                const visibleRows = this.filteredRows.slice(startIndex, endIndex);
+
+                if (visibleRows.length === 0) {
+                    this.tableBody.innerHTML =
+                        '<tr><td colspan="100%" class="text-center">Tidak ada data ditemukan</td></tr>';
+                } else {
+                    visibleRows.forEach(row => this.tableBody.appendChild(row.cloneNode(true)));
+                }
+            }
+
+            renderPagination() {
+                // Hitung total page berdasarkan filteredRows
+                const totalPages = Math.ceil(this.filteredRows.length / this.itemsPerPage);
+
+                let paginationHTML = `
+                <li class="page-item prev ${this.currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="javascript:void(0);"><i class="tf-icon bx bx-chevron-left"></i> Previous</a>
+                </li>`;
+
+                for (let i = 1; i <= totalPages; i++) {
+                    paginationHTML += `
+                    <li class="page-item page-num ${i === this.currentPage ? 'active' : ''}">
+                        <a class="page-link" href="javascript:void(0);">${i}</a>
+                    </li>`;
+                }
+
+                paginationHTML += `
+                <li class="page-item next ${this.currentPage === totalPages || totalPages === 0 ? 'disabled' : ''}">
+                    <a class="page-link" href="javascript:void(0);">Next <i class="tf-icon bx bx-chevron-right"></i></a>
+                </li>`;
+
+                this.paginationContainer.innerHTML = paginationHTML;
+                this.addEventListeners(totalPages);
+            }
+
+            addEventListeners(totalPages) {
+                this.paginationContainer.querySelectorAll('.page-num').forEach((item, index) => {
+                    item.addEventListener('click', () => {
+                        this.currentPage = index + 1;
+                        this.updateView();
+                    });
+                });
+
+                const prevBtn = this.paginationContainer.querySelector('.prev');
+                if (prevBtn && !prevBtn.classList.contains('disabled')) {
+                    prevBtn.addEventListener('click', () => {
+                        this.currentPage--;
+                        this.updateView();
+                    });
+                }
+
+                const nextBtn2 = this.paginationContainer.querySelector('.next');
+                if (nextBtn2 && !nextBtn2.classList.contains('disabled')) {
+                    nextBtn2.addEventListener('click', () => {
+                        this.currentPage++;
+                        this.updateView();
+                    });
+                }
+            }
+
+            updateView() {
+                this.renderTable();
+                this.renderPagination();
+            }
         }
-
-        // Enable/disable prev button
-        const prevBtn = pagination.querySelector('.prev');
-        if (currentPage === 1) {
-            prevBtn.classList.add('disabled');
-        } else {
-            prevBtn.classList.remove('disabled');
-            prevBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                currentPage--;
-                renderTable();
-                renderPagination();
-                window.scrollTo(0, 0);
-            });
-        }
-
-        // Enable/disable next button
-        const nextBtn2 = pagination.querySelector('.next');
-        if (currentPage === totalPages) {
-            nextBtn2.classList.add('disabled');
-        } else {
-            nextBtn2.classList.remove('disabled');
-            nextBtn2.addEventListener('click', (e) => {
-                e.preventDefault();
-                currentPage++;
-                renderTable();
-                renderPagination();
-                window.scrollTo(0, 0);
-            });
-        }
     }
-
-    // Initialize on page load
-    initPagination();
 </script>
