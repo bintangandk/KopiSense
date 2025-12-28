@@ -89,8 +89,8 @@
                         </div>
                     </a>
                 </li>
-                <li class="menu-item">
-                    <a href="#" class="menu-link">
+                <li class="menu-item {{ request()->routeIs('censor-data.soilPh') ? 'active' : '' }}">
+                    <a href="{{ route('censor-data.soilPh') }}" class="menu-link">
                         <div data-i18n="Connections">
                             Data pH Tanah
                         </div>
