@@ -17,7 +17,7 @@
             </div>
 
             <!-- Card Censor -->
-            @include('components.ui.censorTempCard.index')
+            @include('components.module.censorTempCard.index')
             <!--/ Card Censor -->
         </div>
     </div>
