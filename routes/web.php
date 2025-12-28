@@ -50,3 +50,7 @@ Route::get('/censor-data/temperature', function () {
 Route::get('/censor-data/humidity', function () {
     return view('pages.censorData.humidity.index');
 })->name('censor-data.humidity');
+
+Route::get('/censor-data/soilPh', function () {
+    return view('pages.censorData.soilPh.index');
+})->name('censor-data.soilPh');
