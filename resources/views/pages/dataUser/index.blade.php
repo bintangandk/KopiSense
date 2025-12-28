@@ -11,11 +11,11 @@
                         <x-ui.searchInput.index placeholder="Cari data anggota..." class="mb-4" />
 
                         {{-- Refresh Button --}}
-                        <x-ui.buttonRefresh.index id="refreshCDataUser" class="mb-3" />
+                        <x-ui.buttonRefresh.index id="refreshCDataUser" class="btn-sm" />
                     </div>
                     <div class="col-md-9 d-flex justify-content-end">
                         {{-- Add Button --}}
-                        <x-ui.button.index variant="primary" icon="bx bx-plus">Tambah
+                        <x-ui.button.index variant="primary" icon="bx bx-plus" class="btn-sm">Tambah
                             Anggota</x-ui.button.index>
                     </div>
                 </div>
