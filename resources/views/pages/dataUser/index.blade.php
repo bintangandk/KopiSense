@@ -15,8 +15,9 @@
                     </div>
                     <div class="col-md-9 d-flex justify-content-end">
                         {{-- Add Button --}}
-                        <x-ui.button.index variant="primary" icon="bx bx-plus" class="btn-sm">Tambah
-                            Anggota</x-ui.button.index>
+                        <x-ui.button.index href="{{ route('data-user.create') }}" variant="primary" icon="bx bx-plus">
+                            Tambah Anggota
+                        </x-ui.button.index>
                     </div>
                 </div>
             </div>
