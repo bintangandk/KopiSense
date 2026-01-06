@@ -27,12 +27,12 @@
                             <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button"
                                 id="growthReportId" data-bs-toggle="dropdown" aria-haspopup="true"
                                 aria-expanded="false">
-                                2022
+                                Hari ini
                             </button>
                             <div class="dropdown-menu dropdown-menu-end" aria-labelledby="growthReportId">
-                                <a class="dropdown-item" href="javascript:void(0);">2021</a>
-                                <a class="dropdown-item" href="javascript:void(0);">2020</a>
-                                <a class="dropdown-item" href="javascript:void(0);">2019</a>
+                                <a class="dropdown-item" href="javascript:void(0);">Senin</a>
+                                <a class="dropdown-item" href="javascript:void(0);">Selasa</a>
+                                <a class="dropdown-item" href="javascript:void(0);">Rabu</a>
                             </div>
                         </div>
                     </div>
