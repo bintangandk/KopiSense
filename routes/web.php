@@ -32,15 +32,22 @@ Route::get('/dashboard', function () {
     return view('pages.dashboard.index');
 })->name('dashboard');
 
+
 // Profile
 Route::get('/profile', function () {
     return view('pages.profile.index');
 })->name('profile');
 
+
 // Data Users
 Route::get('/data-user', function () {
     return view('pages.dataUser.index');
 })->name('data-user');
+
+Route::get('/data-user/create', function () {
+    return view('pages.dataUser.create.index');
+})->name('data-user.create');
+
 
 // Censor Data
 Route::get('/censor-data/temperature', function () {
