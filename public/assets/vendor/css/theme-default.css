@@ -100,15 +100,15 @@
 }
 
 .text-body[href]:hover {
-  color: #5f61e6 !important;
+  color: #00704A !important;
 }
 
 .bg-primary {
-  background-color: #696cff !important;
+  background-color: #00704A !important;
 }
 
 a.bg-primary:hover, a.bg-primary:focus {
-  background-color: #6467f2 !important;
+  background-color: #005C3D !important;
 }
 
 .dropdown-notifications-item:not(.mark-as-read) .dropdown-notifications-read span {
@@ -157,18 +157,18 @@ a.list-group-item-primary:hover, a.list-group-item-primary:focus,
 button.list-group-item-primary:hover,
 button.list-group-item-primary:focus {
   background-color: #d6d7f2;
-  color: #696cff;
+  color: #00704A;
 }
 a.list-group-item-primary.active,
 button.list-group-item-primary.active {
-  border-color: #696cff;
-  background-color: #696cff;
-  color: #696cff;
+  border-color: #00704A;
+  background-color: #00704A;
+  color: #00704A;
 }
 
 .list-group-item.active, .list-group-item.active:hover, .list-group-item.active:focus {
-  border-color: #696cff;
-  background-color: #696cff;
+  border-color: #00704A;
+  background-color: #00704A;
 }
 
 .alert-primary {
@@ -560,11 +560,11 @@ a {
   color: #00704A;
 }
 a:hover {
-  color: #787bff;
+  color: #005C3D;
 }
 
 .fill-primary {
-  fill: #696cff;
+  fill: #005C3D;
 }
 
 .bg-navbar-theme {
