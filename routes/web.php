@@ -61,3 +61,9 @@ Route::get('/censor-data/humidity', function () {
 Route::get('/censor-data/soilPh', function () {
     return view('pages.censorData.soilPh.index');
 })->name('censor-data.soilPh');
+
+
+// Control Pump
+Route::get('/control-pump', function () {
+    return view('pages.controlPump.index');
+})->name('control-pump');
