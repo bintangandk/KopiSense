@@ -34,6 +34,9 @@
         class="template-customizer-theme-css" />
     <link rel="stylesheet" href="{{ asset('assets/css/demo.css') }}" />
 
+    <link rel="stylesheet" href="{{ asset('assets/vendor/css/iot-card.css') }}">
+
+
     <!-- Vendors CSS -->
     <link rel="stylesheet" href="{{ asset('assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css') }}" />
 
