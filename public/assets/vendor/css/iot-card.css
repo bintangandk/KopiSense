@@ -1,0 +1,99 @@
+
+/* Styling Container Utama */
+    .card-iot-container {
+        background: #fff;
+        border: none;
+        padding: 0;
+    }
+
+    /* Styling Badge Tanggal (Kotak di atas) */
+    .date-badge {
+        border: 1px solid #7F9F94; /* Warna border kehijauan sesuai gambar */
+        border-radius: 12px;
+        padding: 10px 20px;
+        display: inline-block; /* Agar lebar menyesuaikan konten, tidak full width */
+        background-color: #fff;
+        color: #333;
+    }
+    
+    .date-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 2px;
+        display: block;
+    }
+
+    /* Styling Card Item (Suhu, Kelembapan, pH) */
+    .stat-card {
+        background-color: #EEEEEE; /* Background abu-abu muda */
+        border: none;
+        border-radius: 16px;
+        padding: 20px;
+        height: 100%;
+        position: relative;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        transition: transform 0.2s;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+    }
+
+    /* Styling Icon Utama (Kiri Atas) */
+    .stat-icon {
+        font-size: 1.5rem;
+        color: #333;
+    }
+
+    /* Styling Tombol Panah (Kanan Atas) */
+    .action-btn {
+        background-color: #fff;
+        width: 55px;
+        height: 55px;
+        border-radius: 8px; /* Sedikit rounded */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        color: #000;
+        text-decoration: none;
+    }
+
+    /* Typography Angka Utama */
+    .stat-value {
+        font-size: 5rem; /* Ukuran besar sesuai desain */
+        font-weight: 700; /* Bold */
+        color: #000;
+        line-height: 1;
+        margin-top: 10px;
+        margin-bottom: 5px;
+    }
+
+    /* Satuan (%) */
+    .stat-unit {
+        font-size: 2rem;
+        color: #888;
+        font-weight: 600;
+    }
+
+    /* Label Judul (Nilai Suhu, dll) */
+    .stat-label {
+        font-weight: 600;
+        color: #444;
+        display: block;
+        margin-top: 15px;
+    }
+
+    /* Deskripsi Batas Aman */
+    .stat-desc {
+        font-size: 0.85rem;
+        color: #666;
+        margin-top: 5px;
+        display: block;
+    }
+
+    .device-icon-iot {
+        width: 34px;
+        height: 34px;
+    }
