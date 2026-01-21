@@ -2,12 +2,12 @@
 
 @section('content')
     <div class="container-xxl grow container-p-y">
-        <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">Kontrol /</span> Pompa</h4>
+        <h4 class="fw-bold py-3 mb-4"><span class="text-muted fw-light">Kontrol /</span> Lingkungan</h4>
 
         <div class="row">
             <div class="col-md-6">
                 <div class="card mb-4">
-                    <h5 class="card-header">Setting Pompa</h5>
+                    <h5 class="card-header">Pengaturan Lingkungan Ideal</h5>
                     <div class="card-body">
                         <div class="mt-3">
                             <label class="form-label">Batas Aman Suhu (°C)</label>
@@ -77,7 +77,7 @@
             </div>
             <div class="col-md-6">
                 <div class="card mb-4">
-                    <h5 class="card-header">Kontrol Manual</h5>
+                    <h5 class="card-header">Kontrol Darurat Pompa</h5>
                     <div class="card-body">
                         <div class="mb-4">
                             <label class="form-label">Status Pompa</label>

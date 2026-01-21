@@ -64,6 +64,6 @@ Route::get('/censor-data/soilPh', function () {
 
 
 // Control Pump
-Route::get('/control-pump', function () {
-    return view('pages.controlPump.index');
-})->name('control-pump');
+Route::get('/environmental-control', function () {
+    return view('pages.controlEnviron.index');
+})->name('environmental-control');

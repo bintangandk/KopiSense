@@ -99,9 +99,9 @@
             </ul>
         </li>
         <li class="menu-item">
-            <a href="{{ route('control-pump') }}" class="menu-link">
+            <a href="{{ route('environmental-control') }}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-cube-alt"></i>
-                <div data-i18n="Basic">Setting Pompa</div>
+                <div data-i18n="Basic">Kontrol Lingkungan</div>
             </a>
         </li>
         <li class="menu-item {{ request()->routeIs('data-user') ? 'active' : '' }}">
