@@ -30,4 +30,23 @@ class UserController extends Controller
         $user = User::with('profile')->findOrFail($id);
         return view('pages.dataUser.detail.index', compact('user'));
     }
+
+    public function destroy($id)
+    {
+        try {
+            $user = User::with('profile')->findOrFail($id);
+
+            // Delete user profile first if exists
+            if ($user->profile) {
+                $user->profile->delete();
+            }
+
+            // Then delete user
+            $user->delete();
+
+            return redirect()->route('data-user')->with('success', 'Data anggota berhasil dihapus.');
+        } catch (\Exception $e) {
+            return redirect()->route('data-user')->with('error', 'Gagal menghapus data anggota.');
+        }
+    }
 }

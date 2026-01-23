@@ -55,9 +55,15 @@
                                                 Detail</a>
                                             <a class="dropdown-item" href="javascript:void(0);"><i
                                                     class="bx bx-edit-alt me-1"></i> Edit</a>
-                                            <a class="dropdown-item" href="javascript:void(0);"><i
-                                                    class="bx bx-trash me-1"></i>
-                                                Delete</a>
+                                            <form action="{{ route('data-user.destroy', $user->id) }}" method="POST"
+                                                class="form-delete" style="display:inline;">
+                                                @csrf
+                                                @method('DELETE')
+
+                                                <button type="submit" class="dropdown-item">
+                                                    <i class="bx bx-trash me-1"></i> Delete
+                                                </button>
+                                            </form>
                                         </div>
                                     </div>
                                 </td>
@@ -76,26 +82,64 @@
         </div>
     </div>
 
-    <script>
-        // Refresh button functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            const refreshBtn = document.getElementById('refreshDataUser');
-            const searchForm = document.getElementById('searchForm');
+    @push('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
 
-            if (refreshBtn && searchForm) {
-                refreshBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
+                const refreshBtn = document.getElementById('refreshDataUser');
+                const searchForm = document.getElementById('searchForm');
 
-                    // Clear semua input dalam form
-                    const allInputs = searchForm.querySelectorAll('input[type="text"]');
-                    allInputs.forEach(input => {
-                        input.value = '';
+                if (refreshBtn && searchForm) {
+                    refreshBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        searchForm.querySelectorAll('input[type="text"]').forEach(input => {
+                            input.value = '';
+                        });
+                        searchForm.submit();
                     });
+                }
 
-                    // Submit form
-                    searchForm.submit();
+                // ================= DELETE CONFIRMATION =================
+                document.querySelectorAll('.form-delete').forEach(form => {
+                    form.addEventListener('submit', function(e) {
+                        e.preventDefault();
+
+                        Swal.fire({
+                            title: 'Yakin ingin menghapus?',
+                            text: 'Data tidak bisa dikembalikan',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Ya, hapus',
+                            cancelButtonText: 'Batal'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                form.submit();
+                            }
+                        });
+                    });
                 });
-            }
-        });
-    </script>
+
+                // ================= FLASH SUCCESS =================
+                @if (session('success'))
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil',
+                        text: @json(session('success')),
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                @endif
+
+                // ================= FLASH ERROR =================
+                @if (session('error'))
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Gagal',
+                        text: @json(session('error'))
+                    });
+                @endif
+
+            });
+        </script>
+    @endpush
 @endsection
