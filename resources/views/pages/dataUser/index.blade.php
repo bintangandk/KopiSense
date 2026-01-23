@@ -50,7 +50,7 @@
                                             <i class="bx bx-dots-vertical-rounded"></i>
                                         </button>
                                         <div class="dropdown-menu">
-                                            <a class="dropdown-item" href="javascript:void(0);"><i
+                                            <a class="dropdown-item" href="{{ route('data-user.show', $user->id) }}"><i
                                                     class="bx bx-info-circle me-1"></i>
                                                 Detail</a>
                                             <a class="dropdown-item" href="javascript:void(0);"><i

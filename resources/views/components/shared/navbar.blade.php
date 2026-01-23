@@ -9,9 +9,6 @@
     </div>
 
     <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
-        <!-- Search -->
-        @include('components.ui.searchInput.index')
-        <!-- /Search  -->
 
         <ul class="navbar-nav flex-row align-items-center ms-auto">
             <!-- User -->
