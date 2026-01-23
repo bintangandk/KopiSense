@@ -24,4 +24,10 @@ class UserController extends Controller
         $users = $query->paginate(10);
         return view('pages.dataUser.index', compact('users'));
     }
+
+    public function show($id)
+    {
+        $user = User::with('profile')->findOrFail($id);
+        return view('pages.dataUser.detail.index', compact('user'));
+    }
 }

@@ -42,6 +42,7 @@ Route::get('/profile', function () {
 
 // Data Users
 Route::get('/data-user', [UserController::class, 'index'])->name('data-user');
+Route::get('/data-user/{id}', [UserController::class, 'show'])->name('data-user.show');
 
 Route::get('/data-user/create', function () {
     return view('pages.dataUser.create.index');
