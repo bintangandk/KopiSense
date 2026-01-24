@@ -7,6 +7,7 @@
             <div class="card-body pb-0">
                 <form method="GET" action="{{ route('data-user') }}" id="searchForm">
                     <div class="row mb-3">
+
                         <div class="col-md-3 d-flex gap-2">
                             <!-- Search Input -->
                             <x-ui.searchInput.index name="search" placeholder="Cari data anggota..."

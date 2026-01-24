@@ -71,16 +71,15 @@
                             <label class="col-sm-2 col-form-label" for="basic-default-company">Kota</label>
                             <div class="col-sm-10">
                                 <input type="text" id="basic-default-company" class="form-control"
-                                    placeholder="Masukkan Level Anggota" value="{{ $user->profile?->city ?? '-' }}"
-                                    readonly />
+                                    value="{{ $user->profile?->city?->name ?? '-' }}" readonly />
                             </div>
                         </div>
                         <div class="row mb-3">
                             <label class="col-sm-2 col-form-label" for="basic-default-company">Provinsi</label>
                             <div class="col-sm-10">
                                 <input type="text" id="basic-default-company" class="form-control"
-                                    placeholder="Masukkan Level Anggota" value="{{ $user->profile?->province ?? '-' }}"
-                                    readonly />
+                                    placeholder="Masukkan Level Anggota"
+                                    value="{{ $user->profile?->province?->name ?? '-' }}" readonly />
                             </div>
                         </div>
                         <div class="row mb-3">

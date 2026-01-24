@@ -12,6 +12,9 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Seed provinces and cities
+        $this->call(ProvinceSeeder::class);
+
         // Create 30 users with their profiles
         \App\Models\User::factory(30)->create()->each(function ($user) {
             $user->profile()->create(

@@ -42,12 +42,10 @@ Route::get('/profile', function () {
 
 // Data Users
 Route::get('/data-user', [UserController::class, 'index'])->name('data-user');
+Route::get('/data-user/create', [UserController::class, 'create'])->name('data-user.create');
+Route::post('/data-user/store', [UserController::class, 'store'])->name('data-user.store');
 Route::get('/data-user/{id}', [UserController::class, 'show'])->name('data-user.show');
 Route::delete('/data-user/{id}', [UserController::class, 'destroy'])->name('data-user.destroy');
-
-Route::get('/data-user/create', function () {
-    return view('pages.dataUser.create.index');
-})->name('data-user.create');
 
 
 // Censor Data

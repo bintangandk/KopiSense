@@ -22,8 +22,8 @@ class UserProfileFactory extends Factory
             'gender' => fake()->randomElement(['male', 'female']),
             'phone' => fake()->phoneNumber(),
             'address' => fake()->address(),
-            'city' => fake()->city(),
-            'province' => fake()->state(),
+            'province_id' => fake()->numberBetween(1, 37),
+            'city_id' => fake()->numberBetween(1, 447),
             'postal_code' => fake()->postcode(),
         ];
     }
