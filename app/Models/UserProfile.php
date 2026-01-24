@@ -18,8 +18,8 @@ class UserProfile extends Model
         'gender',
         'phone',
         'address',
-        'city',
-        'province',
+        'province_id',
+        'city_id',
         'postal_code',
     ];
 
@@ -29,5 +29,21 @@ class UserProfile extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id', 'id_users');
+    }
+
+    /**
+     * Get the province of the user.
+     */
+    public function province()
+    {
+        return $this->belongsTo(Province::class, 'province_id');
+    }
+
+    /**
+     * Get the city of the user.
+     */
+    public function city()
+    {
+        return $this->belongsTo(City::class, 'city_id');
     }
 }
