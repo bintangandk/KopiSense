@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\LocationController;
+use App\Http\Controllers\Api\SensorDataController;
 
 /*
 |--------------------------------------------------------------------------
@@ -23,3 +24,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::get('/provinces', [LocationController::class, 'getProvinces']);
 Route::get('/provinces/{provinceId}/cities', [LocationController::class, 'getCitiesByProvince']);
 
+// IoT Sensor Data API routes
+Route::post('/sensor-data', [SensorDataController::class, 'store']);
+Route::get('/devices', [SensorDataController::class, 'index']);
+Route::get('/devices/{deviceId}', [SensorDataController::class, 'show']);
