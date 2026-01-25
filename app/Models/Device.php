@@ -25,4 +25,20 @@ class Device extends Model
     {
         return $this->hasMany(Temperature::class, 'device_id');
     }
+
+    /**
+     * Get all humidity readings for this device.
+     */
+    public function humidities()
+    {
+        return $this->hasMany(Humidity::class, 'device_id');
+    }
+
+    /**
+     * Get all soil pH readings for this device.
+     */
+    public function soilPHs()
+    {
+        return $this->hasMany(SoilPH::class, 'device_id');
+    }
 }
