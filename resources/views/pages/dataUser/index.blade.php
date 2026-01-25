@@ -54,7 +54,7 @@
                                             <a class="dropdown-item" href="{{ route('data-user.show', $user->id) }}"><i
                                                     class="bx bx-info-circle me-1"></i>
                                                 Detail</a>
-                                            <a class="dropdown-item" href="javascript:void(0);"><i
+                                            <a class="dropdown-item" href="{{ route('data-user.edit', $user->id) }}"><i
                                                     class="bx bx-edit-alt me-1"></i> Edit</a>
                                             <form action="{{ route('data-user.destroy', $user->id) }}" method="POST"
                                                 class="form-delete" style="display:inline;">
