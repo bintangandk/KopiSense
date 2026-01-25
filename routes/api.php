@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\LocationController;
 use App\Http\Controllers\Api\SensorDataController;
+use App\Http\Controllers\DeviceController;
 
 /*
 |--------------------------------------------------------------------------
@@ -28,3 +29,7 @@ Route::get('/provinces/{provinceId}/cities', [LocationController::class, 'getCit
 Route::post('/sensor-data', [SensorDataController::class, 'store']);
 Route::get('/devices', [SensorDataController::class, 'index']);
 Route::get('/devices/{deviceId}', [SensorDataController::class, 'show']);
+
+// Device API routes for frontend
+Route::get('/devices-list', [DeviceController::class, 'getDevices']);
+Route::get('/device-data/{deviceId}', [DeviceController::class, 'getDeviceData']);
