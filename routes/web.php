@@ -46,6 +46,8 @@ Route::get('/data-user/create', [UserController::class, 'create'])->name('data-u
 Route::post('/data-user/store', [UserController::class, 'store'])->name('data-user.store');
 Route::get('/data-user/{id}', [UserController::class, 'show'])->name('data-user.show');
 Route::delete('/data-user/{id}', [UserController::class, 'destroy'])->name('data-user.destroy');
+Route::get('/data-user/{id}/edit', [UserController::class, 'edit'])->name('data-user.edit');
+Route::put('/data-user/{id}', [UserController::class, 'update'])->name('data-user.update');
 
 
 // Censor Data

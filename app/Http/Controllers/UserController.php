@@ -10,7 +10,7 @@ class UserController extends Controller
 {
     public function index(Request $request)
     {
-        $query = User::with('profile')->orderBy('created_at');
+        $query = User::with('profile')->orderByDesc('created_at');
 
         // Jika ada parameter search
         if ($request->has('search') && $request->search != '') {
@@ -54,7 +54,7 @@ class UserController extends Controller
                 'username' => $request->username,
                 'email' => $request->email,
                 'role' => $request->role,
-                'password' => bcrypt('defaultpassword'), // Set a default password or generate one
+                'password' => bcrypt('defaultpassword'),
             ]);
 
             // Create User Profile
@@ -75,6 +75,59 @@ class UserController extends Controller
 
             DB::rollBack();
             return redirect()->back()->withInput()->with('error', 'Gagal menambahkan data anggota: ' . $e->getMessage());
+        }
+    }
+
+    public function edit($id)
+    {
+        $user = User::with('profile')->findOrFail($id);
+        return view('pages.dataUser.edit.index', compact('user'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $user = User::with('profile')->findOrFail($id);
+
+        $request->validate([
+            'full_name' => 'required|string|max:255',
+            'username' => 'required|string|max:255|unique:users,username,' . $id . ',id',
+            'nik' => 'required|string|max:20|unique:user_profiles,nik,' . $user->profile->id . ',id',
+            'email' => 'required|string|email|max:255|unique:users,email,' . $id . ',id',
+            'gender' => 'nullable|in:Laki-laki,Perempuan',
+            'role' => 'required|in:admin,pegawai',
+            'phone' => 'required|string|max:20',
+            'address' => 'required|string|max:500',
+            'province_id' => 'required|integer|exists:provinces,id',
+            'city_id' => 'required|integer|exists:cities,id',
+            'postal_code' => 'required|string|max:20',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            // Update User
+            $user->update([
+                'username' => $request->username,
+                'email' => $request->email,
+                'role' => $request->role,
+            ]);
+
+            // Update User Profile
+            $user->profile->update([
+                'full_name' => $request->full_name,
+                'nik' => $request->nik,
+                'gender' => $request->gender,
+                'phone' => $request->phone,
+                'address' => $request->address,
+                'province_id' => $request->province_id,
+                'city_id' => $request->city_id,
+                'postal_code' => $request->postal_code,
+            ]);
+
+            DB::commit();
+            return redirect()->route('data-user')->with('success', 'Data anggota berhasil diperbarui.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->withInput()->with('error', 'Gagal memperbarui data anggota: ' . $e->getMessage());
         }
     }
 
