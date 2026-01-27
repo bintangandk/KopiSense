@@ -28,3 +28,8 @@ Route::get('/provinces/{provinceId}/cities', [LocationController::class, 'getCit
 Route::post('/sensor-data', [SensorDataController::class, 'store']);
 Route::get('/devices', [SensorDataController::class, 'index']);
 Route::get('/devices/{deviceId}', [SensorDataController::class, 'show']);
+
+// Sensor Data Filter Routes
+Route::get('/temperatures', [SensorDataController::class, 'getTemperatureData']);
+Route::get('/humidities', [SensorDataController::class, 'getHumidityData']);
+Route::get('/soil-ph', [SensorDataController::class, 'getSoilPHData']);
