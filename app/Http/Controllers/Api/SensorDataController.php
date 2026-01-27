@@ -148,4 +148,141 @@ class SensorDataController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Get temperature data with date range filter
+     * Returns average temperature from all devices
+     */
+    public function getTemperatureData(Request $request)
+    {
+        try {
+            $query = Temperature::query();
+
+            // Filter by date range if provided
+            if ($request->has('start_date') && $request->has('end_date')) {
+                $startDate = $request->start_date . ' 00:00:00';
+                $endDate = $request->end_date . ' 23:59:59';
+                $query->whereBetween('created_at', [$startDate, $endDate]);
+            }
+
+            // Filter by device if provided
+            if ($request->has('device_id')) {
+                $query->where('device_id', $request->device_id);
+            }
+
+            // Get all temperatures ordered by created_at
+            $temperatures = $query->orderBy('created_at')->get();
+
+            // Group by date and calculate average for each date
+            $groupedByDate = $temperatures->groupBy(function ($temp) {
+                return $temp->created_at->format('Y-m-d');
+            });
+
+            $temperatureValues = [];
+            $dates = [];
+
+            foreach ($groupedByDate as $date => $items) {
+                $average = $items->avg('value_temp');
+                $temperatureValues[] = round($average, 2);
+                $dates[] = \Carbon\Carbon::createFromFormat('Y-m-d', $date)->format('d-m-Y');
+            }
+
+            return response()->json([
+                'success' => true,
+                'temperatureValues' => $temperatureValues,
+                'dates' => $dates,
+                'average' => count($temperatureValues) > 0 ? round(collect($temperatureValues)->avg(), 2) : 0,
+                'total_records' => count($temperatures),
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil data temperature: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get humidity data with date range filter
+     */
+    public function getHumidityData(Request $request)
+    {
+        try {
+            $query = Humidity::query();
+
+            if ($request->has('start_date') && $request->has('end_date')) {
+                $startDate = $request->start_date . ' 00:00:00';
+                $endDate = $request->end_date . ' 23:59:59';
+                $query->whereBetween('created_at', [$startDate, $endDate]);
+            }
+
+            if ($request->has('device_id')) {
+                $query->where('device_id', $request->device_id);
+            }
+
+            $humidities = $query->orderBy('created_at')->get();
+
+            $humidityValues = $humidities->map(function ($hum) {
+                return $hum->value_humidity;
+            })->toArray();
+
+            $dates = $humidities->map(function ($hum) {
+                return $hum->created_at->format('d-m-Y');
+            })->toArray();
+
+            return response()->json([
+                'success' => true,
+                'humidityValues' => $humidityValues,
+                'dates' => $dates,
+                'data' => $humidities,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil data humidity: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get soil pH data with date range filter
+     */
+    public function getSoilPHData(Request $request)
+    {
+        try {
+            $query = SoilPH::query();
+
+            if ($request->has('start_date') && $request->has('end_date')) {
+                $startDate = $request->start_date . ' 00:00:00';
+                $endDate = $request->end_date . ' 23:59:59';
+                $query->whereBetween('created_at', [$startDate, $endDate]);
+            }
+
+            if ($request->has('device_id')) {
+                $query->where('device_id', $request->device_id);
+            }
+
+            $soilPHs = $query->orderBy('created_at')->get();
+
+            $soilPHValues = $soilPHs->map(function ($ph) {
+                return $ph->value_ph;
+            })->toArray();
+
+            $dates = $soilPHs->map(function ($ph) {
+                return $ph->created_at->format('d-m-Y');
+            })->toArray();
+
+            return response()->json([
+                'success' => true,
+                'soilPHValues' => $soilPHValues,
+                'dates' => $dates,
+                'data' => $soilPHs,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil data soil pH: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
 }
