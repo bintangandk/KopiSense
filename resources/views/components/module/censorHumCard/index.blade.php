@@ -18,7 +18,7 @@
                 <h5 class="card-header m-0 me-2 pb-3">
                     Rata-Rata Data Kelembapan
                 </h5>
-                <div id="totalRevenueChart" class="px-2"></div>
+                <div id="humidityChartContainer" class="px-2"></div>
             </div>
             <div class="col-12 col-md-4">
                 <div class="card-body">
@@ -27,19 +27,19 @@
                             <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button"
                                 id="growthReportId" data-bs-toggle="dropdown" aria-haspopup="true"
                                 aria-expanded="false">
-                                Hari ini
+                                Periode Waktu
                             </button>
                             <div class="dropdown-menu dropdown-menu-end" aria-labelledby="growthReportId">
-                                <a class="dropdown-item" href="javascript:void(0);">Senin</a>
-                                <a class="dropdown-item" href="javascript:void(0);">Selasa</a>
-                                <a class="dropdown-item" href="javascript:void(0);">Rabu</a>
+                                <a class="dropdown-item" href="javascript:void(0);">Minggu Ini</a>
+                                <a class="dropdown-item" href="javascript:void(0);">Bulan Ini</a>
+                                <a class="dropdown-item" href="javascript:void(0);">Tahun Ini</a>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div id="growthChart"></div>
                 <div class="text-center fw-semibold pt-3 mb-2">
-                    62% Rata-Rata Kenaikan Kelembapan
+                    <span id="avgHumidityText">0%</span> Rata-Rata Kelembapan Greenhouse
                 </div>
             </div>
         </div>
@@ -47,10 +47,16 @@
 </div>
 
 <script>
+    // Global variable untuk chart
+    let humidityChartInstance = null;
+
     document.addEventListener('DOMContentLoaded', function() {
         // 1. Ambil Element berdasarkan ID yang Anda tulis di HTML component di atas
         const datePickerHum = document.getElementById('filterTanggalHum');
-        const chartElement = document.querySelector("#totalRevenueChart");
+        const chartElement = document.querySelector("#humidityChart");
+
+        // Initialize chart dari dashboards-analytics.js
+        initializeHumidityChart();
 
         // 2. Logika Update Grafik saat Tanggal Dipilih
         if (datePickerHum) {
@@ -64,10 +70,10 @@
                 console.log('User memilih tanggal:', dateStr);
 
                 if (dateStr.includes(' to ')) {
-                    const [startDate, endDate] = dateStr.split(' to ');
+                    const [startDate, endDate] = dateStr.split(' to ').map(d => d.trim());
 
-                    // TODO: Panggil fungsi update Chart disini
-                    // Contoh: updateTemperatureChart(startDate, endDate);
+                    // Panggil fungsi update Chart
+                    updateHumidityChartWithDateRange(startDate, endDate);
                     console.log(`Filter Grafik dari ${startDate} sampai ${endDate}`);
 
                 } else {
@@ -76,7 +82,7 @@
             });
         }
 
-        // 3. Logika Tombol Refresh (Opsional)
+        // 3. Logika Tombol Refresh
         const btnRefresh = document.getElementById('refreshCensorHumData');
         if (btnRefresh && datePickerHum) {
             btnRefresh.addEventListener('click', function() {
@@ -85,9 +91,185 @@
                     datePickerHum._flatpickr.clear();
                 }
 
-                // TODO: Reset grafik ke data default
+                // Reset grafik ke data default
+                loadDefaultHumidityData();
                 console.log("Grafik di-refresh ke data default");
             });
         }
+
+        // Initialize dengan data default saat page load
+        loadDefaultHumidityData();
     });
+
+    /**
+     * Initialize humidity chart (dipanggil dari dashboards-analytics.js)
+     */
+    function initializeHumidityChart() {
+        const humidityChartEl = document.querySelector('#humidityChartContainer');
+        if (!humidityChartEl) {
+            console.error('Humidity chart element tidak ditemukan');
+            return;
+        }
+
+        const humidityChartOptions = {
+            series: [{
+                name: 'Kelembapan (%)',
+                data: [0, 0, 0, 0, 0, 0, 0]
+            }],
+            chart: {
+                height: 300,
+                stacked: true,
+                type: 'bar',
+                toolbar: {
+                    show: false
+                }
+            },
+            plotOptions: {
+                bar: {
+                    horizontal: false,
+                    columnWidth: '33%',
+                    borderRadius: 12,
+                    startingShape: 'rounded',
+                    endingShape: 'rounded'
+                }
+            },
+            colors: ['#00704A'],
+            dataLabels: {
+                enabled: false
+            },
+            stroke: {
+                curve: 'smooth',
+                width: 6,
+                lineCap: 'round',
+                colors: ['#fff']
+            },
+            legend: {
+                show: true,
+                horizontalAlign: 'left',
+                position: 'top',
+                markers: {
+                    height: 8,
+                    width: 8,
+                    radius: 12,
+                    offsetX: -3
+                },
+                labels: {
+                    colors: '#00704A'
+                },
+                itemMargin: {
+                    horizontal: 10
+                }
+            },
+            grid: {
+                borderColor: '#e0e0e0',
+                padding: {
+                    top: 0,
+                    bottom: -8,
+                    left: 20,
+                    right: 20
+                }
+            },
+            xaxis: {
+                categories: ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'],
+                labels: {
+                    style: {
+                        fontSize: '13px',
+                        colors: '#00704A'
+                    }
+                },
+                axisTicks: {
+                    show: false
+                },
+                axisBorder: {
+                    show: false
+                }
+            },
+            yaxis: {
+                labels: {
+                    style: {
+                        fontSize: '13px',
+                        colors: '#00704A'
+                    }
+                }
+            }
+        };
+
+        humidityChartInstance = new ApexCharts(humidityChartEl, humidityChartOptions);
+        humidityChartInstance.render();
+    }
+
+    /**
+     * Load default temperature data
+     */
+    async function loadDefaultHumidityData() {
+        try {
+            const response = await fetch('/api/humidities');
+            const result = await response.json();
+
+            if (result.success && humidityChartInstance) {
+                // Update chart dengan data dari database
+                humidityChartInstance.updateSeries([{
+                    name: 'Rata-Rata Kelembapan (%)',
+                    data: result.humidityValues || [0, 0, 0, 0, 0, 0, 0]
+                }]);
+
+                // Update x-axis labels dengan tanggal
+                if (result.dates && result.dates.length > 0) {
+                    humidityChartInstance.updateOptions({
+                        xaxis: {
+                            categories: result.dates.slice(0, 7)
+                        }
+                    });
+                }
+
+                // Update rata-rata humidity display
+                const avgHumidityElement = document.getElementById('avgHumidityText');
+                if (avgHumidityElement) {
+                    avgHumidityElement.textContent = result.average + '%';
+                }
+
+                console.log('Data humidity default berhasil dimuat:', result);
+            }
+        } catch (error) {
+            console.error('Error loading default humidity data:', error);
+        }
+    }
+
+    /**
+     * Update humidity chart dengan date range
+     */
+    async function updateHumidityChartWithDateRange(startDate, endDate) {
+        try {
+            const url = `/api/humidities?start_date=${startDate}&end_date=${endDate}`;
+            const response = await fetch(url);
+            const result = await response.json();
+
+            if (result.success && humidityChartInstance) {
+                // Update chart dengan data dari database
+                humidityChartInstance.updateSeries([{
+                    name: 'Rata-Rata Kelembapan (%)',
+                    data: result.humidityValues || [0, 0, 0, 0, 0, 0, 0]
+                }]);
+
+                // Update x-axis labels dengan tanggal
+                if (result.dates && result.dates.length > 0) {
+                    humidityChartInstance.updateOptions({
+                        xaxis: {
+                            categories: result.dates
+                        }
+                    });
+                }
+
+                // Update rata-rata humidity display
+                const avgHumidityElement = document.getElementById('avgHumidityText');
+                if (avgHumidityElement) {
+                    avgHumidityElement.textContent = result.average + '%';
+                }
+
+                console.log('Data humidity dengan date range berhasil dimuat:', result);
+            }
+        } catch (error) {
+            console.error('Error updating humidity chart with date range:', error);
+        }
+    }
 </script>

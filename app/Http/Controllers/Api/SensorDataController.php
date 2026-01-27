@@ -222,19 +222,25 @@ class SensorDataController extends Controller
 
             $humidities = $query->orderBy('created_at')->get();
 
-            $humidityValues = $humidities->map(function ($hum) {
-                return $hum->value_humidity;
-            })->toArray();
+            $groupedByDate = $humidities->groupBy(function ($hum) {
+                return $hum->created_at->format('Y-m-d');
+            });
 
-            $dates = $humidities->map(function ($hum) {
-                return $hum->created_at->format('d-m-Y');
-            })->toArray();
+            $humidityValues = [];
+            $dates = [];
+
+            foreach ($groupedByDate as $date => $items) {
+                $average = $items->avg('value_humidity');
+                $humidityValues[] = round($average, 2);
+                $dates[] = \Carbon\Carbon::createFromFormat('Y-m-d', $date)->format('d-m-Y');
+            }
 
             return response()->json([
                 'success' => true,
                 'humidityValues' => $humidityValues,
                 'dates' => $dates,
-                'data' => $humidities,
+                'average' => count($humidityValues) > 0 ? round(collect($humidityValues)->avg(), 2) : 0,
+                'total_records' => count($humidities),
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
@@ -246,6 +252,7 @@ class SensorDataController extends Controller
 
     /**
      * Get soil pH data with date range filter
+     * Returns average soil pH from all devices
      */
     public function getSoilPHData(Request $request)
     {
@@ -264,19 +271,26 @@ class SensorDataController extends Controller
 
             $soilPHs = $query->orderBy('created_at')->get();
 
-            $soilPHValues = $soilPHs->map(function ($ph) {
-                return $ph->value_ph;
-            })->toArray();
+            // Group by date and calculate average for each date
+            $groupedByDate = $soilPHs->groupBy(function ($ph) {
+                return $ph->created_at->format('Y-m-d');
+            });
 
-            $dates = $soilPHs->map(function ($ph) {
-                return $ph->created_at->format('d-m-Y');
-            })->toArray();
+            $soilPHValues = [];
+            $dates = [];
+
+            foreach ($groupedByDate as $date => $items) {
+                $average = $items->avg('value_ph');
+                $soilPHValues[] = round($average, 2);
+                $dates[] = \Carbon\Carbon::createFromFormat('Y-m-d', $date)->format('d-m-Y');
+            }
 
             return response()->json([
                 'success' => true,
                 'soilPHValues' => $soilPHValues,
                 'dates' => $dates,
-                'data' => $soilPHs,
+                'average' => count($soilPHValues) > 0 ? round(collect($soilPHValues)->avg(), 2) : 0,
+                'total_records' => count($soilPHs),
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
