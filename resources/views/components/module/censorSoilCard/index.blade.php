@@ -30,6 +30,7 @@
                                 Periode Waktu
                             </button>
                             <div class="dropdown-menu dropdown-menu-end" aria-labelledby="growthReportId">
+                                <a class="dropdown-item" href="javascript:void(0);">Hari Ini</a>
                                 <a class="dropdown-item" href="javascript:void(0);">Minggu Ini</a>
                                 <a class="dropdown-item" href="javascript:void(0);">Bulan Ini</a>
                                 <a class="dropdown-item" href="javascript:void(0);">Tahun Ini</a>
@@ -39,7 +40,7 @@
                 </div>
                 <div id="soilPhGrowthChart"></div>
                 <div class="text-center fw-semibold pt-3 mb-2">
-                    <span id="avgSoilPhText">0</span> Rata-Rata pH Tanah Greenhouse
+                    <span id="avgSoilPhText">0</span> Rata-Rata Kenaikan pH Tanah Greenhouse
                 </div>
             </div>
         </div>
@@ -96,7 +97,9 @@
                     const periode = this.textContent.trim();
                     console.log('Selected periode:', periode);
 
-                    if (periode === 'Minggu Ini') {
+                    if (periode === 'Hari Ini') {
+                        updateSoilPhGrowthChartByPeriode('daily');
+                    } else if (periode === 'Minggu Ini') {
                         updateSoilPhGrowthChartByPeriode('weekly');
                     } else if (periode === 'Bulan Ini') {
                         updateSoilPhGrowthChartByPeriode('monthly');
@@ -118,14 +121,14 @@
 
                 // Reset grafik ke data default
                 loadDefaultSoilPhData();
-                updateSoilPhGrowthChartByPeriode('weekly');
+                updateSoilPhGrowthChartByPeriode('daily');
                 console.log("Grafik di-refresh ke data default");
             });
         }
 
         // Initialize dengan data default saat page load
         loadDefaultSoilPhData();
-        updateSoilPhGrowthChartByPeriode('weekly');
+        updateSoilPhGrowthChartByPeriode('daily');
     });
 
     /**
@@ -251,8 +254,17 @@
 
                 // Update rata-rata soil pH display
                 const avgSoilPhElement = document.getElementById('avgSoilPhText');
-                if (avgSoilPhElement) {
-                    avgSoilPhElement.textContent = result.average;
+                if (avgSoilPhElement && result.soilPHValues && result.soilPHValues.length > 1) {
+                    // Hitung rata-rata kenaikan
+                    const phValues = result.soilPHValues;
+                    const increases = [];
+                    for (let i = 1; i < phValues.length; i++) {
+                        increases.push(phValues[i] - phValues[i - 1]);
+                    }
+                    const avgIncrease = increases.reduce((a, b) => a + b, 0) / increases.length;
+                    avgSoilPhElement.textContent = (avgIncrease >= 0 ? '+' : '') + avgIncrease.toFixed(2);
+                } else if (avgSoilPhElement) {
+                    avgSoilPhElement.textContent = '0';
                 }
 
                 console.log('Data soil pH default berhasil dimuat:', result);
@@ -289,8 +301,17 @@
 
                 // Update rata-rata soil pH display
                 const avgSoilPhElement = document.getElementById('avgSoilPhText');
-                if (avgSoilPhElement) {
-                    avgSoilPhElement.textContent = result.average;
+                if (avgSoilPhElement && result.soilPHValues && result.soilPHValues.length > 1) {
+                    // Hitung rata-rata kenaikan
+                    const phValues = result.soilPHValues;
+                    const increases = [];
+                    for (let i = 1; i < phValues.length; i++) {
+                        increases.push(phValues[i] - phValues[i - 1]);
+                    }
+                    const avgIncrease = increases.reduce((a, b) => a + b, 0) / increases.length;
+                    avgSoilPhElement.textContent = (avgIncrease >= 0 ? '+' : '') + avgIncrease.toFixed(2);
+                } else if (avgSoilPhElement) {
+                    avgSoilPhElement.textContent = '0';
                 }
 
                 console.log('Data soil pH dengan date range berhasil dimuat:', result);
@@ -404,7 +425,7 @@
 
     /**
      * Update Soil pH Growth Chart berdasarkan periode
-     * @param {string} periode - 'weekly', 'monthly', atau 'yearly'
+     * @param {string} periode - 'daily', 'weekly', 'monthly', atau 'yearly'
      */
     async function updateSoilPhGrowthChartByPeriode(periode) {
         try {
@@ -414,7 +435,11 @@
             const today = new Date();
             const todayFormatted = today.toISOString().split('T')[0]; // YYYY-MM-DD
 
-            if (periode === 'weekly') {
+            if (periode === 'daily') {
+                // Hari ini saja
+                startDate = todayFormatted;
+                endDate = todayFormatted;
+            } else if (periode === 'weekly') {
                 // Minggu ini (7 hari ke belakang)
                 const weekAgo = new Date(today);
                 weekAgo.setDate(weekAgo.getDate() - 7);
@@ -452,20 +477,46 @@
                 const soilPhValues = Array.isArray(result.soilPHValues) ? result.soilPHValues : [];
                 console.log('[updateSoilPhGrowthChartByPeriode] soilPhValues:', soilPhValues);
 
-                // Calculate growth percentage
-                // Jika ada data, bandingkan rata-rata minggu/bulan sekarang dengan minggu/bulan sebelumnya
-                let growthPercentage = 78; // Default value
+                // Calculate growth percentage berdasarkan rata-rata KENAIKAN data
+                let growthPercentage = 50; // Default value (50% = no growth)
 
-                if (soilPhValues.length > 0) {
-                    // Simple calculation: normalize pH value (7.0 is optimal, 6.0-8.0 is good range)
-                    // Convert average pH to percentage (6.0-8.0 range)
-                    const avgPh = result.average;
-                    const minPh = 5.5;
-                    const maxPh = 8.5;
-                    growthPercentage = Math.min(100, Math.max(0, ((avgPh - minPh) / (maxPh - minPh)) * 100));
+                if (soilPhValues.length > 1) {
+                    // Hitung kenaikan antar data point
+                    const increases = [];
+                    for (let i = 1; i < soilPhValues.length; i++) {
+                        const change = soilPhValues[i] - soilPhValues[i - 1];
+                        increases.push(change);
+                    }
+
+                    // Hitung rata-rata kenaikan
+                    const avgIncrease = increases.reduce((a, b) => a + b, 0) / increases.length;
+                    console.log('[updateSoilPhGrowthChartByPeriode] Increases:', increases);
+                    console.log('[updateSoilPhGrowthChartByPeriode] Average increase:', avgIncrease);
+
+                    // Normalize kenaikan ke percentage
+                    // Range: -1 hingga +1 pH per hari = neutral di 50%
+                    // Positive growth = naik (lebih asam/basa), Negative = turun
+                    const maxChange = 1; // Max change per day untuk kalkulasi pH
+                    growthPercentage = Math.min(100, Math.max(0, ((avgIncrease / maxChange) * 50) + 50));
                     growthPercentage = Math.round(growthPercentage);
-                    console.log('[updateSoilPhGrowthChartByPeriode] Growth percentage calculated:',
+                    console.log('[updateSoilPhGrowthChartByPeriode] Growth percentage (based on increase):',
                         growthPercentage);
+
+                    // Update display dengan rata-rata kenaikan
+                    const avgSoilPhElement = document.getElementById('avgSoilPhText');
+                    if (avgSoilPhElement) {
+                        avgSoilPhElement.textContent = (avgIncrease >= 0 ? '+' : '') + avgIncrease.toFixed(2);
+                    }
+                } else if (soilPhValues.length === 1) {
+                    // Hanya 1 data point, tidak bisa hitung kenaikan
+                    growthPercentage = 50; // Neutral
+                    console.log('[updateSoilPhGrowthChartByPeriode] Only 1 data point, using neutral 50%');
+
+                    // Update display ke 0 (netral)
+                    const avgSoilPhElement = document.getElementById('avgSoilPhText');
+                    if (avgSoilPhElement) {
+                        avgSoilPhElement.textContent = '0';
+                    }
                 }
 
                 // Update growth chart dengan persentase baru
