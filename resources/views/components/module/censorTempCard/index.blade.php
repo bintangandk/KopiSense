@@ -30,6 +30,7 @@
                                 Periode Waktu
                             </button>
                             <div class="dropdown-menu dropdown-menu-end" aria-labelledby="growthReportId">
+                                <a class="dropdown-item" href="javascript:void(0);">Hari Ini</a>
                                 <a class="dropdown-item" href="javascript:void(0);">Minggu Ini</a>
                                 <a class="dropdown-item" href="javascript:void(0);">Bulan Ini</a>
                                 <a class="dropdown-item" href="javascript:void(0);">Tahun Ini</a>
@@ -37,9 +38,9 @@
                         </div>
                     </div>
                 </div>
-                <div id="growthChart"></div>
+                <div id="TempGrowthChart"></div>
                 <div class="text-center fw-semibold pt-3 mb-2">
-                    <span id="avgTemperatureText">0°C</span> Rata-Rata Suhu Greenhouse
+                    <span id="avgTemperatureText">0°C</span> Rata-Rata Kenaikan Suhu Greenhouse
                 </div>
             </div>
         </div>
@@ -49,6 +50,7 @@
 <script>
     // Global variable untuk chart
     let temperatureChartInstance = null;
+    let temperatureGrowthChartInstance = null;
 
     document.addEventListener('DOMContentLoaded', function() {
         // 1. Ambil Element berdasarkan ID yang Anda tulis di HTML component di atas
@@ -57,6 +59,7 @@
 
         // Initialize chart dari dashboards-analytics.js
         initializeTemperatureChart();
+        initializeTemperatureGrowthChart();
 
         // 2. Logika Update Grafik saat Tanggal Dipilih
         if (datePickerTemp) {
@@ -82,7 +85,32 @@
             });
         }
 
-        // 3. Logika Tombol Refresh
+        // 3. Logika Tombol Dropdown Periode Waktu
+        const periodeButtons = document.querySelectorAll('[aria-labelledby="growthReportId"]');
+        if (periodeButtons && periodeButtons.length > 0) {
+            const dropdown = periodeButtons[0];
+            const dropdownItems = dropdown.querySelectorAll('.dropdown-item');
+
+            dropdownItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const periode = this.textContent.trim();
+                    console.log('Selected periode:', periode);
+
+                    if (periode === 'Hari Ini') {
+                        updateTemperatureGrowthChartByPeriode('daily');
+                    } else if (periode === 'Minggu Ini') {
+                        updateTemperatureGrowthChartByPeriode('weekly');
+                    } else if (periode === 'Bulan Ini') {
+                        updateTemperatureGrowthChartByPeriode('monthly');
+                    } else if (periode === 'Tahun Ini') {
+                        updateTemperatureGrowthChartByPeriode('yearly');
+                    }
+                });
+            });
+        }
+
+        // 4. Logika Tombol Refresh
         const btnRefresh = document.getElementById('refreshCensorTempData');
         if (btnRefresh && datePickerTemp) {
             btnRefresh.addEventListener('click', function() {
@@ -93,12 +121,14 @@
 
                 // Reset grafik ke data default
                 loadDefaultTemperatureData();
+                updateTemperatureGrowthChartByPeriode('daily');
                 console.log("Grafik di-refresh ke data default");
             });
         }
 
         // Initialize dengan data default saat page load
         loadDefaultTemperatureData();
+        updateTemperatureGrowthChartByPeriode('daily');
     });
 
     /**
@@ -224,8 +254,17 @@
 
                 // Update rata-rata temperature display
                 const avgTempElement = document.getElementById('avgTemperatureText');
-                if (avgTempElement) {
-                    avgTempElement.textContent = result.average + '°C';
+                if (avgTempElement && result.temperatureValues && result.temperatureValues.length > 1) {
+                    // Hitung rata-rata kenaikan
+                    const tempValues = result.temperatureValues;
+                    const increases = [];
+                    for (let i = 1; i < tempValues.length; i++) {
+                        increases.push(tempValues[i] - tempValues[i - 1]);
+                    }
+                    const avgIncrease = increases.reduce((a, b) => a + b, 0) / increases.length;
+                    avgTempElement.textContent = (avgIncrease >= 0 ? '+' : '') + avgIncrease.toFixed(2) + '°C';
+                } else if (avgTempElement) {
+                    avgTempElement.textContent = '0°C';
                 }
 
                 console.log('Data temperature default berhasil dimuat:', result);
@@ -262,14 +301,234 @@
 
                 // Update rata-rata temperature display
                 const avgTempElement = document.getElementById('avgTemperatureText');
-                if (avgTempElement) {
-                    avgTempElement.textContent = result.average + '°C';
+                if (avgTempElement && result.temperatureValues && result.temperatureValues.length > 1) {
+                    // Hitung rata-rata kenaikan
+                    const tempValues = result.temperatureValues;
+                    const increases = [];
+                    for (let i = 1; i < tempValues.length; i++) {
+                        increases.push(tempValues[i] - tempValues[i - 1]);
+                    }
+                    const avgIncrease = increases.reduce((a, b) => a + b, 0) / increases.length;
+                    avgTempElement.textContent = (avgIncrease >= 0 ? '+' : '') + avgIncrease.toFixed(2) + '°C';
+                } else if (avgTempElement) {
+                    avgTempElement.textContent = '0°C';
                 }
 
                 console.log('Data temperature dengan date range berhasil dimuat:', result);
             }
         } catch (error) {
             console.error('Error updating temperature chart with date range:', error);
+        }
+    }
+
+    /**
+     * Initialize Temperature Growth Chart (Radial Bar Chart)
+     */
+    function initializeTemperatureGrowthChart() {
+        console.log('[initializeTemperatureGrowthChart] Starting initialization');
+
+        const growthChartEl = document.querySelector('#TempGrowthChart');
+        if (!growthChartEl) {
+            console.error('[initializeTemperatureGrowthChart] Element #TempGrowthChart not found');
+            return;
+        }
+        console.log('[initializeTemperatureGrowthChart] Element found');
+
+        if (typeof ApexCharts === 'undefined') {
+            console.error('[initializeTemperatureGrowthChart] ApexCharts library not loaded');
+            return;
+        }
+
+        const temperatureGrowthChartOptions = {
+            series: [78],
+            labels: ['Growth'],
+            chart: {
+                height: 240,
+                type: 'radialBar'
+            },
+            plotOptions: {
+                radialBar: {
+                    size: 150,
+                    offsetY: 10,
+                    startAngle: -150,
+                    endAngle: 150,
+                    hollow: {
+                        size: '55%'
+                    },
+                    track: {
+                        background: '#fff',
+                        strokeWidth: '100%'
+                    },
+                    dataLabels: {
+                        name: {
+                            offsetY: 15,
+                            color: '#333',
+                            fontSize: '15px',
+                            fontWeight: '600',
+                            fontFamily: 'Public Sans'
+                        },
+                        value: {
+                            offsetY: -25,
+                            color: '#333',
+                            fontSize: '22px',
+                            fontWeight: '500',
+                            fontFamily: 'Public Sans'
+                        }
+                    }
+                }
+            },
+            colors: ['#00704A'],
+            fill: {
+                type: 'gradient',
+                gradient: {
+                    shade: 'dark',
+                    shadeIntensity: 0.5,
+                    gradientToColors: ['#00704A'],
+                    inverseColors: true,
+                    opacityFrom: 1,
+                    opacityTo: 0.6,
+                    stops: [30, 70, 100]
+                }
+            },
+            stroke: {
+                dashArray: 5
+            },
+            grid: {
+                padding: {
+                    top: -35,
+                    bottom: -10
+                }
+            },
+            states: {
+                hover: {
+                    filter: {
+                        type: 'none'
+                    }
+                },
+                active: {
+                    filter: {
+                        type: 'none'
+                    }
+                }
+            }
+        };
+
+        try {
+            temperatureGrowthChartInstance = new ApexCharts(growthChartEl, temperatureGrowthChartOptions);
+            console.log('[initializeTemperatureGrowthChart] ApexCharts instance created');
+            temperatureGrowthChartInstance.render();
+            console.log('[initializeTemperatureGrowthChart] Chart rendered successfully');
+        } catch (error) {
+            console.error('[initializeTemperatureGrowthChart] Error creating chart:', error);
+        }
+    }
+
+    /**
+     * Update Temperature Growth Chart berdasarkan periode
+     * @param {string} periode - 'daily', 'weekly', 'monthly', atau 'yearly'
+     */
+    async function updateTemperatureGrowthChartByPeriode(periode) {
+        try {
+            console.log('[updateTemperatureGrowthChartByPeriode] Periode:', periode);
+
+            let startDate, endDate;
+            const today = new Date();
+            const todayFormatted = today.toISOString().split('T')[0]; // YYYY-MM-DD
+
+            if (periode === 'daily') {
+                // Hari ini saja
+                startDate = todayFormatted;
+                endDate = todayFormatted;
+            } else if (periode === 'weekly') {
+                // Minggu ini (7 hari ke belakang)
+                const weekAgo = new Date(today);
+                weekAgo.setDate(weekAgo.getDate() - 7);
+                startDate = weekAgo.toISOString().split('T')[0];
+                endDate = todayFormatted;
+            } else if (periode === 'monthly') {
+                // Bulan ini
+                const monthAgo = new Date(today);
+                monthAgo.setMonth(monthAgo.getMonth() - 1);
+                startDate = monthAgo.toISOString().split('T')[0];
+                endDate = todayFormatted;
+            } else if (periode === 'yearly') {
+                // Tahun ini
+                const yearAgo = new Date(today);
+                yearAgo.setFullYear(yearAgo.getFullYear() - 1);
+                startDate = yearAgo.toISOString().split('T')[0];
+                endDate = todayFormatted;
+            }
+
+            console.log('[updateTemperatureGrowthChartByPeriode] Date range:', startDate, 'to', endDate);
+
+            const url = `/api/temperatures?start_date=${startDate}&end_date=${endDate}`;
+            const response = await fetch(url);
+            const result = await response.json();
+
+            console.log('[updateTemperatureGrowthChartByPeriode] API Response:', result);
+
+            if (!temperatureGrowthChartInstance) {
+                console.error(
+                    '[updateTemperatureGrowthChartByPeriode] temperatureGrowthChartInstance not initialized');
+                return;
+            }
+
+            if (result.success) {
+                // Validasi data
+                const temperatureValues = Array.isArray(result.temperatureValues) ? result.temperatureValues : [];
+                console.log('[updateTemperatureGrowthChartByPeriode] temperatureValues:', temperatureValues);
+
+                // Calculate growth percentage berdasarkan rata-rata KENAIKAN data
+                let growthPercentage = 50; // Default value (50% = no growth)
+
+                if (temperatureValues.length > 1) {
+                    // Hitung kenaikan antar data point
+                    const increases = [];
+                    for (let i = 1; i < temperatureValues.length; i++) {
+                        const change = temperatureValues[i] - temperatureValues[i - 1];
+                        increases.push(change);
+                    }
+
+                    // Hitung rata-rata kenaikan
+                    const avgIncrease = increases.reduce((a, b) => a + b, 0) / increases.length;
+                    console.log('[updateTemperatureGrowthChartByPeriode] Increases:', increases);
+                    console.log('[updateTemperatureGrowthChartByPeriode] Average increase:', avgIncrease);
+
+                    // Normalize kenaikan ke percentage
+                    // Range: -5 hingga +5 °C per hari = neutral di 50%
+                    // Positive growth = naik, Negative = turun
+                    const maxChange = 5; // Max change per day untuk kalkulasi
+                    growthPercentage = Math.min(100, Math.max(0, ((avgIncrease / maxChange) * 50) + 50));
+                    growthPercentage = Math.round(growthPercentage);
+                    console.log('[updateTemperatureGrowthChartByPeriode] Growth percentage (based on increase):',
+                        growthPercentage);
+
+                    // Update display dengan rata-rata kenaikan
+                    const avgTempElement = document.getElementById('avgTemperatureText');
+                    if (avgTempElement) {
+                        avgTempElement.textContent = (avgIncrease >= 0 ? '+' : '') + avgIncrease.toFixed(2) + '°C';
+                    }
+                } else if (temperatureValues.length === 1) {
+                    // Hanya 1 data point, tidak bisa hitung kenaikan
+                    growthPercentage = 50; // Neutral
+                    console.log('[updateTemperatureGrowthChartByPeriode] Only 1 data point, using neutral 50%');
+
+                    // Update display ke 0°C (netral)
+                    const avgTempElement = document.getElementById('avgTemperatureText');
+                    if (avgTempElement) {
+                        avgTempElement.textContent = '0°C';
+                    }
+                }
+
+                // Update growth chart dengan persentase baru
+                temperatureGrowthChartInstance.updateSeries([growthPercentage]);
+                console.log('[updateTemperatureGrowthChartByPeriode] Series updated with percentage:',
+                    growthPercentage);
+            } else {
+                console.warn('[updateTemperatureGrowthChartByPeriode] API success is false:', result);
+            }
+        } catch (error) {
+            console.error('[updateTemperatureGrowthChartByPeriode] Error:', error);
         }
     }
 </script>
