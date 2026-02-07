@@ -18,7 +18,7 @@
                 <h5 class="card-header m-0 me-2 pb-3">
                     Rata-Rata Data pH Tanah
                 </h5>
-                <div id="totalRevenueChart" class="px-2"></div>
+                <div id="soilPhChartContainer" class="px-2"></div>
             </div>
             <div class="col-12 col-md-4">
                 <div class="card-body">
@@ -27,19 +27,19 @@
                             <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button"
                                 id="growthReportId" data-bs-toggle="dropdown" aria-haspopup="true"
                                 aria-expanded="false">
-                                Hari ini
+                                Periode Waktu
                             </button>
                             <div class="dropdown-menu dropdown-menu-end" aria-labelledby="growthReportId">
-                                <a class="dropdown-item" href="javascript:void(0);">Senin</a>
-                                <a class="dropdown-item" href="javascript:void(0);">Selasa</a>
-                                <a class="dropdown-item" href="javascript:void(0);">Rabu</a>
+                                <a class="dropdown-item" href="javascript:void(0);">Minggu Ini</a>
+                                <a class="dropdown-item" href="javascript:void(0);">Bulan Ini</a>
+                                <a class="dropdown-item" href="javascript:void(0);">Tahun Ini</a>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div id="growthChart"></div>
+                <div id="soilPhGrowthChart"></div>
                 <div class="text-center fw-semibold pt-3 mb-2">
-                    62% Rata-Rata Kenaikan pH Tanah
+                    <span id="avgSoilPhText">0</span> Rata-Rata pH Tanah Greenhouse
                 </div>
             </div>
         </div>
@@ -47,10 +47,18 @@
 </div>
 
 <script>
+    // Global variable untuk chart
+    let soilPhChartInstance = null;
+    let soilPhGrowthChartInstance = null;
+
     document.addEventListener('DOMContentLoaded', function() {
         // 1. Ambil Element berdasarkan ID yang Anda tulis di HTML component di atas
         const datePickerSoil = document.getElementById('filterTanggalSoil');
-        const chartElement = document.querySelector("#totalRevenueChart");
+        const chartElement = document.querySelector("#soilPhChartContainer");
+
+        // Initialize chart dari dashboards-analytics.js
+        initializeSoilPhChart();
+        initializeSoilPhGrowthChart();
 
         // 2. Logika Update Grafik saat Tanggal Dipilih
         if (datePickerSoil) {
@@ -64,10 +72,10 @@
                 console.log('User memilih tanggal:', dateStr);
 
                 if (dateStr.includes(' to ')) {
-                    const [startDate, endDate] = dateStr.split(' to ');
+                    const [startDate, endDate] = dateStr.split(' to ').map(d => d.trim());
 
-                    // TODO: Panggil fungsi update Chart disini
-                    // Contoh: updateTemperatureChart(startDate, endDate);
+                    // Panggil fungsi update Chart
+                    updateSoilPhChartWithDateRange(startDate, endDate);
                     console.log(`Filter Grafik dari ${startDate} sampai ${endDate}`);
 
                 } else {
@@ -76,7 +84,30 @@
             });
         }
 
-        // 3. Logika Tombol Refresh (Opsional)
+        // 3. Logika Tombol Dropdown Periode Waktu
+        const periodeButtons = document.querySelectorAll('[aria-labelledby="growthReportId"]');
+        if (periodeButtons && periodeButtons.length > 0) {
+            const dropdown = periodeButtons[0];
+            const dropdownItems = dropdown.querySelectorAll('.dropdown-item');
+
+            dropdownItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const periode = this.textContent.trim();
+                    console.log('Selected periode:', periode);
+
+                    if (periode === 'Minggu Ini') {
+                        updateSoilPhGrowthChartByPeriode('weekly');
+                    } else if (periode === 'Bulan Ini') {
+                        updateSoilPhGrowthChartByPeriode('monthly');
+                    } else if (periode === 'Tahun Ini') {
+                        updateSoilPhGrowthChartByPeriode('yearly');
+                    }
+                });
+            });
+        }
+
+        // 4. Logika Tombol Refresh
         const btnRefresh = document.getElementById('refreshCensorSoilData');
         if (btnRefresh && datePickerSoil) {
             btnRefresh.addEventListener('click', function() {
@@ -85,9 +116,366 @@
                     datePickerSoil._flatpickr.clear();
                 }
 
-                // TODO: Reset grafik ke data default
+                // Reset grafik ke data default
+                loadDefaultSoilPhData();
+                updateSoilPhGrowthChartByPeriode('weekly');
                 console.log("Grafik di-refresh ke data default");
             });
         }
+
+        // Initialize dengan data default saat page load
+        loadDefaultSoilPhData();
+        updateSoilPhGrowthChartByPeriode('weekly');
     });
+
+    /**
+     * Initialize soil pH chart
+     */
+    function initializeSoilPhChart() {
+        const soilPhChartEl = document.querySelector('#soilPhChartContainer');
+        if (!soilPhChartEl) {
+            console.error('Soil pH chart element tidak ditemukan');
+            return;
+        }
+
+        const soilPhChartOptions = {
+            series: [{
+                name: 'Rata-Rata pH Tanah',
+                data: [0, 0, 0, 0, 0, 0, 0]
+            }],
+            chart: {
+                height: 300,
+                stacked: true,
+                type: 'bar',
+                toolbar: {
+                    show: false
+                }
+            },
+            plotOptions: {
+                bar: {
+                    horizontal: false,
+                    columnWidth: '33%',
+                    borderRadius: 12,
+                    startingShape: 'rounded',
+                    endingShape: 'rounded'
+                }
+            },
+            colors: ['#00704A'],
+            dataLabels: {
+                enabled: false
+            },
+            stroke: {
+                curve: 'smooth',
+                width: 6,
+                lineCap: 'round',
+                colors: ['#fff']
+            },
+            legend: {
+                show: true,
+                horizontalAlign: 'left',
+                position: 'top',
+                markers: {
+                    height: 8,
+                    width: 8,
+                    radius: 12,
+                    offsetX: -3
+                },
+                labels: {
+                    colors: '#00704A'
+                },
+                itemMargin: {
+                    horizontal: 10
+                }
+            },
+            grid: {
+                borderColor: '#e0e0e0',
+                padding: {
+                    top: 0,
+                    bottom: -8,
+                    left: 20,
+                    right: 20
+                }
+            },
+            xaxis: {
+                categories: ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'],
+                labels: {
+                    style: {
+                        fontSize: '13px',
+                        colors: '#00704A'
+                    }
+                },
+                axisTicks: {
+                    show: false
+                },
+                axisBorder: {
+                    show: false
+                }
+            },
+            yaxis: {
+                labels: {
+                    style: {
+                        fontSize: '13px',
+                        colors: '#00704A'
+                    }
+                }
+            }
+        };
+
+        soilPhChartInstance = new ApexCharts(soilPhChartEl, soilPhChartOptions);
+        soilPhChartInstance.render();
+    }
+
+    /**
+     * Load default soil pH data
+     */
+    async function loadDefaultSoilPhData() {
+        try {
+            const response = await fetch('/api/soil-ph');
+            const result = await response.json();
+
+            if (result.success && soilPhChartInstance) {
+                // Update chart dengan data dari database
+                soilPhChartInstance.updateSeries([{
+                    name: 'Rata-Rata pH Tanah',
+                    data: result.soilPHValues || [0, 0, 0, 0, 0, 0, 0]
+                }]);
+
+                // Update x-axis labels dengan tanggal
+                if (result.dates && result.dates.length > 0) {
+                    soilPhChartInstance.updateOptions({
+                        xaxis: {
+                            categories: result.dates.slice(0, 7)
+                        }
+                    });
+                }
+
+                // Update rata-rata soil pH display
+                const avgSoilPhElement = document.getElementById('avgSoilPhText');
+                if (avgSoilPhElement) {
+                    avgSoilPhElement.textContent = result.average;
+                }
+
+                console.log('Data soil pH default berhasil dimuat:', result);
+            }
+        } catch (error) {
+            console.error('Error loading default soil pH data:', error);
+        }
+    }
+
+    /**
+     * Update soil pH chart dengan date range
+     */
+    async function updateSoilPhChartWithDateRange(startDate, endDate) {
+        try {
+            const url = `/api/soil-ph?start_date=${startDate}&end_date=${endDate}`;
+            const response = await fetch(url);
+            const result = await response.json();
+
+            if (result.success && soilPhChartInstance) {
+                // Update chart dengan data dari database
+                soilPhChartInstance.updateSeries([{
+                    name: 'Rata-Rata pH Tanah',
+                    data: result.soilPHValues || [0, 0, 0, 0, 0, 0, 0]
+                }]);
+
+                // Update x-axis labels dengan tanggal
+                if (result.dates && result.dates.length > 0) {
+                    soilPhChartInstance.updateOptions({
+                        xaxis: {
+                            categories: result.dates
+                        }
+                    });
+                }
+
+                // Update rata-rata soil pH display
+                const avgSoilPhElement = document.getElementById('avgSoilPhText');
+                if (avgSoilPhElement) {
+                    avgSoilPhElement.textContent = result.average;
+                }
+
+                console.log('Data soil pH dengan date range berhasil dimuat:', result);
+            }
+        } catch (error) {
+            console.error('Error updating soil pH chart with date range:', error);
+        }
+    }
+
+    /**
+     * Initialize Soil pH Growth Chart (Radial Bar Chart)
+     */
+    function initializeSoilPhGrowthChart() {
+        console.log('[initializeSoilPhGrowthChart] Starting initialization');
+
+        const growthChartEl = document.querySelector('#soilPhGrowthChart');
+        if (!growthChartEl) {
+            console.error('[initializeSoilPhGrowthChart] Element #soilPhGrowthChart not found');
+            return;
+        }
+        console.log('[initializeSoilPhGrowthChart] Element found');
+
+        if (typeof ApexCharts === 'undefined') {
+            console.error('[initializeSoilPhGrowthChart] ApexCharts library not loaded');
+            return;
+        }
+
+        const soilPhGrowthChartOptions = {
+            series: [78],
+            labels: ['Growth'],
+            chart: {
+                height: 240,
+                type: 'radialBar'
+            },
+            plotOptions: {
+                radialBar: {
+                    size: 150,
+                    offsetY: 10,
+                    startAngle: -150,
+                    endAngle: 150,
+                    hollow: {
+                        size: '55%'
+                    },
+                    track: {
+                        background: '#fff',
+                        strokeWidth: '100%'
+                    },
+                    dataLabels: {
+                        name: {
+                            offsetY: 15,
+                            color: '#333',
+                            fontSize: '15px',
+                            fontWeight: '600',
+                            fontFamily: 'Public Sans'
+                        },
+                        value: {
+                            offsetY: -25,
+                            color: '#333',
+                            fontSize: '22px',
+                            fontWeight: '500',
+                            fontFamily: 'Public Sans'
+                        }
+                    }
+                }
+            },
+            colors: ['#00704A'],
+            fill: {
+                type: 'gradient',
+                gradient: {
+                    shade: 'dark',
+                    shadeIntensity: 0.5,
+                    gradientToColors: ['#00704A'],
+                    inverseColors: true,
+                    opacityFrom: 1,
+                    opacityTo: 0.6,
+                    stops: [30, 70, 100]
+                }
+            },
+            stroke: {
+                dashArray: 5
+            },
+            grid: {
+                padding: {
+                    top: -35,
+                    bottom: -10
+                }
+            },
+            states: {
+                hover: {
+                    filter: {
+                        type: 'none'
+                    }
+                },
+                active: {
+                    filter: {
+                        type: 'none'
+                    }
+                }
+            }
+        };
+
+        try {
+            soilPhGrowthChartInstance = new ApexCharts(growthChartEl, soilPhGrowthChartOptions);
+            console.log('[initializeSoilPhGrowthChart] ApexCharts instance created');
+            soilPhGrowthChartInstance.render();
+            console.log('[initializeSoilPhGrowthChart] Chart rendered successfully');
+        } catch (error) {
+            console.error('[initializeSoilPhGrowthChart] Error creating chart:', error);
+        }
+    }
+
+    /**
+     * Update Soil pH Growth Chart berdasarkan periode
+     * @param {string} periode - 'weekly', 'monthly', atau 'yearly'
+     */
+    async function updateSoilPhGrowthChartByPeriode(periode) {
+        try {
+            console.log('[updateSoilPhGrowthChartByPeriode] Periode:', periode);
+
+            let startDate, endDate;
+            const today = new Date();
+            const todayFormatted = today.toISOString().split('T')[0]; // YYYY-MM-DD
+
+            if (periode === 'weekly') {
+                // Minggu ini (7 hari ke belakang)
+                const weekAgo = new Date(today);
+                weekAgo.setDate(weekAgo.getDate() - 7);
+                startDate = weekAgo.toISOString().split('T')[0];
+                endDate = todayFormatted;
+            } else if (periode === 'monthly') {
+                // Bulan ini
+                const monthAgo = new Date(today);
+                monthAgo.setMonth(monthAgo.getMonth() - 1);
+                startDate = monthAgo.toISOString().split('T')[0];
+                endDate = todayFormatted;
+            } else if (periode === 'yearly') {
+                // Tahun ini
+                const yearAgo = new Date(today);
+                yearAgo.setFullYear(yearAgo.getFullYear() - 1);
+                startDate = yearAgo.toISOString().split('T')[0];
+                endDate = todayFormatted;
+            }
+
+            console.log('[updateSoilPhGrowthChartByPeriode] Date range:', startDate, 'to', endDate);
+
+            const url = `/api/soil-ph?start_date=${startDate}&end_date=${endDate}`;
+            const response = await fetch(url);
+            const result = await response.json();
+
+            console.log('[updateSoilPhGrowthChartByPeriode] API Response:', result);
+
+            if (!soilPhGrowthChartInstance) {
+                console.error('[updateSoilPhGrowthChartByPeriode] soilPhGrowthChartInstance not initialized');
+                return;
+            }
+
+            if (result.success) {
+                // Validasi data
+                const soilPhValues = Array.isArray(result.soilPHValues) ? result.soilPHValues : [];
+                console.log('[updateSoilPhGrowthChartByPeriode] soilPhValues:', soilPhValues);
+
+                // Calculate growth percentage
+                // Jika ada data, bandingkan rata-rata minggu/bulan sekarang dengan minggu/bulan sebelumnya
+                let growthPercentage = 78; // Default value
+
+                if (soilPhValues.length > 0) {
+                    // Simple calculation: normalize pH value (7.0 is optimal, 6.0-8.0 is good range)
+                    // Convert average pH to percentage (6.0-8.0 range)
+                    const avgPh = result.average;
+                    const minPh = 5.5;
+                    const maxPh = 8.5;
+                    growthPercentage = Math.min(100, Math.max(0, ((avgPh - minPh) / (maxPh - minPh)) * 100));
+                    growthPercentage = Math.round(growthPercentage);
+                    console.log('[updateSoilPhGrowthChartByPeriode] Growth percentage calculated:',
+                        growthPercentage);
+                }
+
+                // Update growth chart dengan persentase baru
+                soilPhGrowthChartInstance.updateSeries([growthPercentage]);
+                console.log('[updateSoilPhGrowthChartByPeriode] Series updated with percentage:', growthPercentage);
+            } else {
+                console.warn('[updateSoilPhGrowthChartByPeriode] API success is false:', result);
+            }
+        } catch (error) {
+            console.error('[updateSoilPhGrowthChartByPeriode] Error:', error);
+        }
+    }
 </script>
