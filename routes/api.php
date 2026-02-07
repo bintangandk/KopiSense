@@ -33,3 +33,8 @@ Route::get('/devices/{deviceId}', [SensorDataController::class, 'show']);
 // Device API routes for frontend
 Route::get('/devices-list', [DeviceController::class, 'getDevices']);
 Route::get('/device-data/{deviceId}', [DeviceController::class, 'getDeviceData']);
+
+// Sensor Data Filter Routes
+Route::get('/temperatures', [SensorDataController::class, 'getTemperatureData']);
+Route::get('/humidities', [SensorDataController::class, 'getHumidityData']);
+Route::get('/soil-ph', [SensorDataController::class, 'getSoilPHData']);

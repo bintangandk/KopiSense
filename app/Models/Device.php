@@ -41,4 +41,9 @@ class Device extends Model
     {
         return $this->hasMany(SoilPH::class, 'device_id');
     }
+
+    public function controlActions()
+    {
+        return $this->hasMany(ControlActions::class, 'device_id');
+    }
 }
