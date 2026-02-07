@@ -30,6 +30,7 @@
                                 Periode Waktu
                             </button>
                             <div class="dropdown-menu dropdown-menu-end" aria-labelledby="growthReportId">
+                                <a class="dropdown-item" href="javascript:void(0);">Hari Ini</a>
                                 <a class="dropdown-item" href="javascript:void(0);">Minggu Ini</a>
                                 <a class="dropdown-item" href="javascript:void(0);">Bulan Ini</a>
                                 <a class="dropdown-item" href="javascript:void(0);">Tahun Ini</a>
@@ -37,9 +38,9 @@
                         </div>
                     </div>
                 </div>
-                <div id="growthChart"></div>
+                <div id="humGrowthChart"></div>
                 <div class="text-center fw-semibold pt-3 mb-2">
-                    <span id="avgHumidityText">0%</span> Rata-Rata Kelembapan Greenhouse
+                    <span id="avgHumidityText">0%</span> Rata-Rata Kenaikan Kelembapan Greenhouse
                 </div>
             </div>
         </div>
@@ -49,6 +50,7 @@
 <script>
     // Global variable untuk chart
     let humidityChartInstance = null;
+    let humidityGrowthChartInstance = null;
 
     document.addEventListener('DOMContentLoaded', function() {
         // 1. Ambil Element berdasarkan ID yang Anda tulis di HTML component di atas
@@ -57,6 +59,7 @@
 
         // Initialize chart dari dashboards-analytics.js
         initializeHumidityChart();
+        initializeHumidityGrowthChart();
 
         // 2. Logika Update Grafik saat Tanggal Dipilih
         if (datePickerHum) {
@@ -82,7 +85,32 @@
             });
         }
 
-        // 3. Logika Tombol Refresh
+        // 3. Logika Tombol Dropdown Periode Waktu
+        const periodeButtons = document.querySelectorAll('[aria-labelledby="growthReportId"]');
+        if (periodeButtons && periodeButtons.length > 0) {
+            const dropdown = periodeButtons[0];
+            const dropdownItems = dropdown.querySelectorAll('.dropdown-item');
+
+            dropdownItems.forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const periode = this.textContent.trim();
+                    console.log('Selected periode:', periode);
+
+                    if (periode === 'Hari Ini') {
+                        updateHumidityGrowthChartByPeriode('daily');
+                    } else if (periode === 'Minggu Ini') {
+                        updateHumidityGrowthChartByPeriode('weekly');
+                    } else if (periode === 'Bulan Ini') {
+                        updateHumidityGrowthChartByPeriode('monthly');
+                    } else if (periode === 'Tahun Ini') {
+                        updateHumidityGrowthChartByPeriode('yearly');
+                    }
+                });
+            });
+        }
+
+        // 4. Logika Tombol Refresh
         const btnRefresh = document.getElementById('refreshCensorHumData');
         if (btnRefresh && datePickerHum) {
             btnRefresh.addEventListener('click', function() {
@@ -93,12 +121,14 @@
 
                 // Reset grafik ke data default
                 loadDefaultHumidityData();
+                updateHumidityGrowthChartByPeriode('daily');
                 console.log("Grafik di-refresh ke data default");
             });
         }
 
         // Initialize dengan data default saat page load
         loadDefaultHumidityData();
+        updateHumidityGrowthChartByPeriode('daily');
     });
 
     /**
@@ -199,7 +229,7 @@
     }
 
     /**
-     * Load default temperature data
+     * Load default humidity data
      */
     async function loadDefaultHumidityData() {
         try {
@@ -224,8 +254,17 @@
 
                 // Update rata-rata humidity display
                 const avgHumidityElement = document.getElementById('avgHumidityText');
-                if (avgHumidityElement) {
-                    avgHumidityElement.textContent = result.average + '%';
+                if (avgHumidityElement && result.humidityValues && result.humidityValues.length > 1) {
+                    // Hitung rata-rata kenaikan
+                    const humValues = result.humidityValues;
+                    const increases = [];
+                    for (let i = 1; i < humValues.length; i++) {
+                        increases.push(humValues[i] - humValues[i - 1]);
+                    }
+                    const avgIncrease = increases.reduce((a, b) => a + b, 0) / increases.length;
+                    avgHumidityElement.textContent = (avgIncrease >= 0 ? '+' : '') + avgIncrease.toFixed(2) + '%';
+                } else if (avgHumidityElement) {
+                    avgHumidityElement.textContent = '0%';
                 }
 
                 console.log('Data humidity default berhasil dimuat:', result);
@@ -262,14 +301,234 @@
 
                 // Update rata-rata humidity display
                 const avgHumidityElement = document.getElementById('avgHumidityText');
-                if (avgHumidityElement) {
-                    avgHumidityElement.textContent = result.average + '%';
+                if (avgHumidityElement && result.humidityValues && result.humidityValues.length > 1) {
+                    // Hitung rata-rata kenaikan
+                    const humValues = result.humidityValues;
+                    const increases = [];
+                    for (let i = 1; i < humValues.length; i++) {
+                        increases.push(humValues[i] - humValues[i - 1]);
+                    }
+                    const avgIncrease = increases.reduce((a, b) => a + b, 0) / increases.length;
+                    avgHumidityElement.textContent = (avgIncrease >= 0 ? '+' : '') + avgIncrease.toFixed(2) + '%';
+                } else if (avgHumidityElement) {
+                    avgHumidityElement.textContent = '0%';
                 }
 
                 console.log('Data humidity dengan date range berhasil dimuat:', result);
             }
         } catch (error) {
             console.error('Error updating humidity chart with date range:', error);
+        }
+    }
+
+    /**
+     * Initialize Humidity Growth Chart (Radial Bar Chart)
+     */
+    function initializeHumidityGrowthChart() {
+        console.log('[initializeHumidityGrowthChart] Starting initialization');
+
+        const growthChartEl = document.querySelector('#humGrowthChart');
+        if (!growthChartEl) {
+            console.error('[initializeHumidityGrowthChart] Element #humGrowthChart not found');
+            return;
+        }
+        console.log('[initializeHumidityGrowthChart] Element found');
+
+        if (typeof ApexCharts === 'undefined') {
+            console.error('[initializeHumidityGrowthChart] ApexCharts library not loaded');
+            return;
+        }
+
+        const humidityGrowthChartOptions = {
+            series: [78],
+            labels: ['Growth'],
+            chart: {
+                height: 240,
+                type: 'radialBar'
+            },
+            plotOptions: {
+                radialBar: {
+                    size: 150,
+                    offsetY: 10,
+                    startAngle: -150,
+                    endAngle: 150,
+                    hollow: {
+                        size: '55%'
+                    },
+                    track: {
+                        background: '#fff',
+                        strokeWidth: '100%'
+                    },
+                    dataLabels: {
+                        name: {
+                            offsetY: 15,
+                            color: '#333',
+                            fontSize: '15px',
+                            fontWeight: '600',
+                            fontFamily: 'Public Sans'
+                        },
+                        value: {
+                            offsetY: -25,
+                            color: '#333',
+                            fontSize: '22px',
+                            fontWeight: '500',
+                            fontFamily: 'Public Sans'
+                        }
+                    }
+                }
+            },
+            colors: ['#00704A'],
+            fill: {
+                type: 'gradient',
+                gradient: {
+                    shade: 'dark',
+                    shadeIntensity: 0.5,
+                    gradientToColors: ['#00704A'],
+                    inverseColors: true,
+                    opacityFrom: 1,
+                    opacityTo: 0.6,
+                    stops: [30, 70, 100]
+                }
+            },
+            stroke: {
+                dashArray: 5
+            },
+            grid: {
+                padding: {
+                    top: -35,
+                    bottom: -10
+                }
+            },
+            states: {
+                hover: {
+                    filter: {
+                        type: 'none'
+                    }
+                },
+                active: {
+                    filter: {
+                        type: 'none'
+                    }
+                }
+            }
+        };
+
+        try {
+            humidityGrowthChartInstance = new ApexCharts(growthChartEl, humidityGrowthChartOptions);
+            console.log('[initializeHumidityGrowthChart] ApexCharts instance created');
+            humidityGrowthChartInstance.render();
+            console.log('[initializeHumidityGrowthChart] Chart rendered successfully');
+        } catch (error) {
+            console.error('[initializeHumidityGrowthChart] Error creating chart:', error);
+        }
+    }
+
+    /**
+     * Update Humidity Growth Chart berdasarkan periode
+     * @param {string} periode - 'daily', 'weekly', 'monthly', atau 'yearly'
+     */
+    async function updateHumidityGrowthChartByPeriode(periode) {
+        try {
+            console.log('[updateHumidityGrowthChartByPeriode] Periode:', periode);
+
+            let startDate, endDate;
+            const today = new Date();
+            const todayFormatted = today.toISOString().split('T')[0]; // YYYY-MM-DD
+
+            if (periode === 'daily') {
+                // Hari ini saja
+                startDate = todayFormatted;
+                endDate = todayFormatted;
+            } else if (periode === 'weekly') {
+                // Minggu ini (7 hari ke belakang)
+                const weekAgo = new Date(today);
+                weekAgo.setDate(weekAgo.getDate() - 7);
+                startDate = weekAgo.toISOString().split('T')[0];
+                endDate = todayFormatted;
+            } else if (periode === 'monthly') {
+                // Bulan ini
+                const monthAgo = new Date(today);
+                monthAgo.setMonth(monthAgo.getMonth() - 1);
+                startDate = monthAgo.toISOString().split('T')[0];
+                endDate = todayFormatted;
+            } else if (periode === 'yearly') {
+                // Tahun ini
+                const yearAgo = new Date(today);
+                yearAgo.setFullYear(yearAgo.getFullYear() - 1);
+                startDate = yearAgo.toISOString().split('T')[0];
+                endDate = todayFormatted;
+            }
+
+            console.log('[updateHumidityGrowthChartByPeriode] Date range:', startDate, 'to', endDate);
+
+            const url = `/api/humidities?start_date=${startDate}&end_date=${endDate}`;
+            const response = await fetch(url);
+            const result = await response.json();
+
+            console.log('[updateHumidityGrowthChartByPeriode] API Response:', result);
+
+            if (!humidityGrowthChartInstance) {
+                console.error(
+                    '[updateHumidityGrowthChartByPeriode] humidityGrowthChartInstance not initialized');
+                return;
+            }
+
+            if (result.success) {
+                // Validasi data
+                const humidityValues = Array.isArray(result.humidityValues) ? result.humidityValues : [];
+                console.log('[updateHumidityGrowthChartByPeriode] humidityValues:', humidityValues);
+
+                // Calculate growth percentage berdasarkan rata-rata KENAIKAN data
+                let growthPercentage = 50; // Default value (50% = no growth)
+
+                if (humidityValues.length > 1) {
+                    // Hitung kenaikan antar data point
+                    const increases = [];
+                    for (let i = 1; i < humidityValues.length; i++) {
+                        const change = humidityValues[i] - humidityValues[i - 1];
+                        increases.push(change);
+                    }
+
+                    // Hitung rata-rata kenaikan
+                    const avgIncrease = increases.reduce((a, b) => a + b, 0) / increases.length;
+                    console.log('[updateHumidityGrowthChartByPeriode] Increases:', increases);
+                    console.log('[updateHumidityGrowthChartByPeriode] Average increase:', avgIncrease);
+
+                    // Normalize kenaikan ke percentage
+                    // Range: -10 hingga +10 % per hari = neutral di 50%
+                    // Positive growth = naik, Negative = turun
+                    const maxChange = 10; // Max change per day untuk kalkulasi
+                    growthPercentage = Math.min(100, Math.max(0, ((avgIncrease / maxChange) * 50) + 50));
+                    growthPercentage = Math.round(growthPercentage);
+                    console.log('[updateHumidityGrowthChartByPeriode] Growth percentage (based on increase):',
+                        growthPercentage);
+
+                    // Update display dengan rata-rata kenaikan
+                    const avgHumElement = document.getElementById('avgHumidityText');
+                    if (avgHumElement) {
+                        avgHumElement.textContent = (avgIncrease >= 0 ? '+' : '') + avgIncrease.toFixed(2) + '%';
+                    }
+                } else if (humidityValues.length === 1) {
+                    // Hanya 1 data point, tidak bisa hitung kenaikan
+                    growthPercentage = 50; // Neutral
+                    console.log('[updateHumidityGrowthChartByPeriode] Only 1 data point, using neutral 50%');
+
+                    // Update display ke 0% (netral)
+                    const avgHumElement = document.getElementById('avgHumidityText');
+                    if (avgHumElement) {
+                        avgHumElement.textContent = '0%';
+                    }
+                }
+
+                // Update growth chart dengan persentase baru
+                humidityGrowthChartInstance.updateSeries([growthPercentage]);
+                console.log('[updateHumidityGrowthChartByPeriode] Series updated with percentage:',
+                    growthPercentage);
+            } else {
+                console.warn('[updateHumidityGrowthChartByPeriode] API success is false:', result);
+            }
+        } catch (error) {
+            console.error('[updateHumidityGrowthChartByPeriode] Error:', error);
         }
     }
 </script>
