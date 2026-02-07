@@ -5,8 +5,15 @@
             <div class="date-badge">
                 <span class="date-label">Real Time Data:</span>
                 <strong style="font-size: 1rem; color: #555;">
-                    {{ $tanggal ?? 'Sabtu, 19 Januari 2026' }}
+                    <span id="currentDate">{{ $date ?? 'Sabtu, 19 Januari 2026' }}</span>
                 </strong>
+            </div>
+
+            <!-- Device Select Button -->
+            <div class="device-selector">
+                <select id="deviceSelect" class="form-control" style="width: 200px;">
+                    <option value="" disabled selected>Pilih Device IoT</option>
+                </select>
             </div>
         </div>
 
@@ -23,7 +30,7 @@
 
                     <span class="stat-label">Nilai Suhu</span>
                     <h1 class="stat-value">
-                        {{ $suhu ?? 27 }}
+                        <span id="tempValue">{{ $temperature ?? '-' }}</span><span class="stat-unit">°C</span>
                     </h1>
 
                     <small class="stat-desc">
@@ -43,7 +50,7 @@
 
                     <span class="stat-label">Kelembapan</span>
                     <h1 class="stat-value">
-                        {{ $kelembapan ?? 80 }}<span class="stat-unit">%</span>
+                        <span id="humidityValue">{{ $humidity ?? '-' }}</span><span class="stat-unit">%</span>
                     </h1>
 
                     <small class="stat-desc">
@@ -63,7 +70,7 @@
 
                     <span class="stat-label">pH Tanah</span>
                     <h1 class="stat-value">
-                        {{ $ph ?? 7.6 }}
+                        <span id="phValue">{{ $soilPH ?? '-' }}</span>
                     </h1>
 
                     <small class="stat-desc">
