@@ -5,7 +5,7 @@
             <div class="date-badge">
                 <span class="date-label">Real Time Data:</span>
                 <strong style="font-size: 1rem; color: #555;">
-                    <span id="currentDate">{{ $date ?? 'Sabtu, 19 Januari 2026' }}</span>
+                    <span id="currentDate">{{ $date }}</span>
                 </strong>
             </div>
 

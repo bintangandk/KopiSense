@@ -36,12 +36,21 @@ class DeviceController extends Controller
         // Get latest soil pH
         $soilPH = $device->soilPHs()->latest('created_at')->first();
 
+        // Get the latest date from all sensor data
+        $dates = collect([
+            $temperature?->created_at,
+            $humidity?->created_at,
+            $soilPH?->created_at
+        ])->filter()->sortDesc();
+
+        $latestDate = $dates->first() ?? now();
+
         return response()->json([
             'device' => $device,
             'temperature' => $temperature?->value_temp ?? null,
             'humidity' => $humidity?->value_humidity ?? null,
             'soilPH' => $soilPH?->value_ph ?? null,
-            'date' => now()->locale('id')->translatedFormat('l, d F Y'),
+            'date' => $latestDate->locale('id')->translatedFormat('l, d F Y'),
         ]);
     }
 }
