@@ -1,16 +1,13 @@
-<div class="card">
-    <div class="d-flex align-items-end row">
-        <div class="col-sm-7">
+<div class="card" style="min-height: 315px;">
+    <div class="d-flex align-items-end row h-100">
+        <div class="col-sm-6">
             <div class="card-body">
                 <h5 class="card-title text-primary">
                     Selamat Datang John! 🎉
                 </h5>
                 <p class="mb-4">
-                    You have done
-                    <span class="fw-bold">72%</span>
-                    more sales today. Check
-                    your new badge in your
-                    profile.
+                    Pantau dan kendalikan kondisi lingkungan greenhouse secara real-time untuk mendukung pertumbuhan
+                    optimal bibit kopi robusta anda.
                 </p>
             </div>
         </div>

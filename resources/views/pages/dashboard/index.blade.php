@@ -4,8 +4,19 @@
 @section('content')
     <div class="container-xxl grow container-p-y">
         <div class="row">
-            <div class="max-w-7xl mx-auto p-6 mb-5">
-                @include('components.ui.welcomeCard.index')
+            <div class="max-w-7xl mx-auto p-6 mb-5 w-100">
+                <div class="row g-4">
+                    <div class="col-lg-7">
+                        @include('components.ui.welcomeCard.index')
+                    </div>
+                    <div class="col-lg-5">
+                        @include('components.ui.thresholdCard.index', [
+                            'temperature' => $temperature ?? '28-30',
+                            'humidity' => $humidity ?? '60-80',
+                            'soilPH' => $soilPH ?? '6-8',
+                        ])
+                    </div>
+                </div>
             </div>
 
             <div class="max-w-7xl mx-auto p-6">
