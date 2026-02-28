@@ -78,11 +78,15 @@
                             adventure
                         </p>
 
-                        <form id="formAuthentication" class="mb-3" action="index.html" method="POST">
+                        <form id="formAuthentication" class="mb-3" action="{{ route('login.post') }}" method="POST">
+                            @csrf
                             <div class="mb-3">
                                 <label for="email" class="form-label">Email or Username</label>
-                                <input type="text" class="form-control" id="email" name="email-username"
-                                    placeholder="Enter your email or username" autofocus />
+                                <input type="text" class="form-control @error('email-username') is-invalid @enderror" id="email" name="email-username"
+                                    placeholder="Enter your email or username" value="{{ old('email-username') }}" autofocus />
+                                @error('email-username')
+                                    <span class="invalid-feedback">{{ $message }}</span>
+                                @enderror
                             </div>
                             <div class="mb-3 form-password-toggle">
                                 <div class="d-flex justify-content-between">
@@ -92,11 +96,14 @@
                                     </a>
                                 </div>
                                 <div class="input-group input-group-merge">
-                                    <input type="password" id="password" class="form-control" name="password"
+                                    <input type="password" id="password" class="form-control @error('password') is-invalid @enderror" name="password"
                                         placeholder="&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;"
                                         aria-describedby="password" />
                                     <span class="input-group-text cursor-pointer"><i class="bx bx-hide"></i></span>
                                 </div>
+                                @error('password')
+                                    <span class="text-danger small">{{ $message }}</span>
+                                @enderror
                             </div>
                             <div class="mb-3">
                                 <div class="form-check">
@@ -107,10 +114,9 @@
                                 </div>
                             </div>
                             <div class="mb-3">
-                                {{-- <button class="btn btn-primary d-grid w-100" type="submit">
+                                <button class="btn btn-primary d-grid w-100" type="submit">
                                     Sign in
-                                </button> --}}
-                                <a class="btn btn-primary d-grid w-100" href="{{ route('dashboard') }}">Login</a>
+                                </button>
                             </div>
                         </form>
 
