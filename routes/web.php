@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\AuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -15,9 +16,9 @@ use App\Http\Controllers\UserController;
 */
 
 //auth routes
-Route::get('/', function () {
-    return view(('auth.login.index'));
-})->name('login');
+Route::get('/', [AuthController::class, 'showLogin'])->name('login');
+Route::post('/login', [AuthController::class, 'login'])->name('login.post');
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::get('/register', function () {
     return view('auth.register.index');
@@ -28,43 +29,43 @@ Route::get('/forgot-password', function () {
 })->name('forgot-password');
 
 
-// Dashboard
-Route::get('/dashboard', function () {
-    return view('pages.dashboard.index');
-})->name('dashboard');
+// Dashboard - Protected
+Route::middleware(['auth'])->group(function () {
+    Route::get('/dashboard', function () {
+        return view('pages.dashboard.index');
+    })->name('dashboard');
 
+    // Profile
+    Route::get('/profile', function () {
+        return view('pages.profile.index');
+    })->name('profile');
 
-// Profile
-Route::get('/profile', function () {
-    return view('pages.profile.index');
-})->name('profile');
+    // Data Users - Only Admin can access
+    Route::middleware(['not.employee'])->group(function () {
+        Route::get('/data-user', [UserController::class, 'index'])->name('data-user');
+        Route::get('/data-user/create', [UserController::class, 'create'])->name('data-user.create');
+        Route::post('/data-user/store', [UserController::class, 'store'])->name('data-user.store');
+        Route::get('/data-user/{id}', [UserController::class, 'show'])->name('data-user.show');
+        Route::delete('/data-user/{id}', [UserController::class, 'destroy'])->name('data-user.destroy');
+        Route::get('/data-user/{id}/edit', [UserController::class, 'edit'])->name('data-user.edit');
+        Route::put('/data-user/{id}', [UserController::class, 'update'])->name('data-user.update');
+    });
 
+    // Censor Data
+    Route::get('/censor-data/temperature', function () {
+        return view('pages.censorData.temperature.index');
+    })->name('censor-data.temperature');
 
-// Data Users
-Route::get('/data-user', [UserController::class, 'index'])->name('data-user');
-Route::get('/data-user/create', [UserController::class, 'create'])->name('data-user.create');
-Route::post('/data-user/store', [UserController::class, 'store'])->name('data-user.store');
-Route::get('/data-user/{id}', [UserController::class, 'show'])->name('data-user.show');
-Route::delete('/data-user/{id}', [UserController::class, 'destroy'])->name('data-user.destroy');
-Route::get('/data-user/{id}/edit', [UserController::class, 'edit'])->name('data-user.edit');
-Route::put('/data-user/{id}', [UserController::class, 'update'])->name('data-user.update');
+    Route::get('/censor-data/humidity', function () {
+        return view('pages.censorData.humidity.index');
+    })->name('censor-data.humidity');
 
+    Route::get('/censor-data/soilPh', function () {
+        return view('pages.censorData.soilPh.index');
+    })->name('censor-data.soilPh');
 
-// Censor Data
-Route::get('/censor-data/temperature', function () {
-    return view('pages.censorData.temperature.index');
-})->name('censor-data.temperature');
-
-Route::get('/censor-data/humidity', function () {
-    return view('pages.censorData.humidity.index');
-})->name('censor-data.humidity');
-
-Route::get('/censor-data/soilPh', function () {
-    return view('pages.censorData.soilPh.index');
-})->name('censor-data.soilPh');
-
-
-// Control Pump
-Route::get('/environmental-control', function () {
-    return view('pages.controlEnviron.index');
-})->name('environmental-control');
+    // Control Pump
+    Route::get('/environmental-control', function () {
+        return view('pages.controlEnviron.index');
+    })->name('environmental-control');
+});

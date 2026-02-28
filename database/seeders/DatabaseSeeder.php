@@ -12,14 +12,10 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Seed provinces and cities
+        // Seed provinces and cities FIRST
         $this->call(ProvinceSeeder::class);
 
-        // Create 30 users with their profiles
-        \App\Models\User::factory(30)->create()->each(function ($user) {
-            $user->profile()->create(
-                \App\Models\UserProfile::factory()->make()->toArray()
-            );
-        });
+        // Then seed users with default password 12345678
+        $this->call(UserSeeder::class);
     }
 }
