@@ -10,7 +10,7 @@
         <div class="row">
             <div class="col-md-12">
                 {{-- Form Profile --}}
-                @include('components.module.formProfile.index')
+                @include('components.module.formProfile.index', ['user' => $user])
                 {{-- /Form Profile --}}
             </div>
         </div>
