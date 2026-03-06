@@ -25,9 +25,15 @@ Route::get('/register', function () {
     return view('auth.register.index');
 })->name('register');
 
-Route::get('/forgot-password', function () {
-    return view('auth.forgot-password.index');
-})->name('forgot-password');
+Route::get('/forgot-password', [AuthController::class, 'showForgotPassword'])->name('forgot-password');
+Route::post('/forgot-password', [AuthController::class, 'sendResetToken'])->name('forgot-password.send-token');
+
+Route::get('/forgot-password/token', [AuthController::class, 'showTokenForm'])->name('forgot-password.token');
+Route::post('/forgot-password/token', [AuthController::class, 'verifyResetToken'])->name('forgot-password.verify-token');
+
+Route::get('/reset-password/{token}', [AuthController::class, 'showResetPasswordForm'])->name('reset-password.form');
+Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('reset-password.update');
+
 
 
 // Dashboard - Protected
