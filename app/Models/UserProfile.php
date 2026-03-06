@@ -18,6 +18,7 @@ class UserProfile extends Model
         'gender',
         'phone',
         'address',
+        'profile_picture',
         'province_id',
         'city_id',
         'postal_code',

@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ProfileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -36,9 +37,8 @@ Route::middleware(['auth'])->group(function () {
     })->name('dashboard');
 
     // Profile
-    Route::get('/profile', function () {
-        return view('pages.profile.index');
-    })->name('profile');
+    Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
 
     // Data Users - Only Admin can access
     Route::middleware(['not.employee'])->group(function () {

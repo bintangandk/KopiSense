@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('gender')->nullable();
             $table->string('phone')->nullable();
             $table->string('address')->nullable();
+            $table->string('profile_picture')->nullable();
             $table->foreignId('province_id')->nullable()->constrained('provinces')->onDelete('set null');
             $table->foreignId('city_id')->nullable()->constrained('cities')->onDelete('set null');
             $table->string('postal_code')->nullable();
