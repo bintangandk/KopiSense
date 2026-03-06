@@ -57,30 +57,37 @@
                 <!-- Forgot Password -->
                 <div class="card">
                     <div class="card-body">
-                        <h4 class="mb-2">Forgot Password? 🔒</h4>
+                        <h4 class="mb-2">Reset Password? 🔒</h4>
                         <p class="mb-4">
-                            Enter your email and we'll send you instructions
-                            to reset your password
+                            Enter your new password and confirm it
                         </p>
-                        @if (session('success'))
-                            <div class="alert alert-success" role="alert">
-                                {{ session('success') }}
-                            </div>
-                        @endif
-
-                        <form id="formAuthentication" class="mb-3" action="{{ route('forgot-password.send-token') }}"
+                        <form id="formAuthentication" class="mb-3" action="{{ route('reset-password.update') }}"
                             method="POST">
                             @csrf
+                            <input type="hidden" name="token" value="{{ $token }}" />
                             <div class="mb-3">
                                 <label for="email" class="form-label">Email</label>
                                 <input type="text" class="form-control" id="email" name="email"
-                                    placeholder="Enter your email" value="{{ old('email') }}" autofocus />
+                                    placeholder="Enter your email" value="{{ old('email', $email) }}" autofocus />
                                 @error('email')
                                     <small class="text-danger">{{ $message }}</small>
                                 @enderror
                             </div>
+                            <div class="mb-3">
+                                <label for="password" class="form-label">New Password</label>
+                                <input type="password" class="form-control" id="password" name="password"
+                                    placeholder="Enter your new password" />
+                                @error('password')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
+                            <div class="mb-3">
+                                <label for="confirm_password" class="form-label">Confirm Password</label>
+                                <input type="password" class="form-control" id="password_confirmation"
+                                    name="password_confirmation" placeholder="Confirm your new password" />
+                            </div>
                             <button class="btn btn-primary d-grid w-100">
-                                Send Reset Link
+                                Reset Password
                             </button>
                         </form>
                         <div class="text-center">

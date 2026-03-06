@@ -57,10 +57,9 @@
                 <!-- Forgot Password -->
                 <div class="card">
                     <div class="card-body">
-                        <h4 class="mb-2">Forgot Password? 🔒</h4>
+                        <h4 class="mb-2"> Token Reset 🔒</h4>
                         <p class="mb-4">
-                            Enter your email and we'll send you instructions
-                            to reset your password
+                            Enter your 6-digit token from the email we sent you to reset your password
                         </p>
                         @if (session('success'))
                             <div class="alert alert-success" role="alert">
@@ -68,25 +67,35 @@
                             </div>
                         @endif
 
-                        <form id="formAuthentication" class="mb-3" action="{{ route('forgot-password.send-token') }}"
+                        <form id="formAuthentication" class="mb-3" action="{{ route('forgot-password.verify-token') }}"
                             method="POST">
                             @csrf
                             <div class="mb-3">
                                 <label for="email" class="form-label">Email</label>
                                 <input type="text" class="form-control" id="email" name="email"
-                                    placeholder="Enter your email" value="{{ old('email') }}" autofocus />
+                                    placeholder="Enter your email" value="{{ old('email', $email) }}" autofocus />
                                 @error('email')
                                     <small class="text-danger">{{ $message }}</small>
                                 @enderror
                             </div>
+                            <div class="mb-3">
+                                <label for="token" class="form-label">Token</label>
+                                <input type="text" class="form-control" id="token" name="token"
+                                    placeholder="Enter your 6-digit token" value="{{ old('token') }}"
+                                    inputmode="numeric" maxlength="6" pattern="[0-9]{6}" />
+                                @error('token')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
+                            </div>
                             <button class="btn btn-primary d-grid w-100">
-                                Send Reset Link
+                                Reset Password
                             </button>
                         </form>
+
                         <div class="text-center">
-                            <a href="{{ route('login') }}" class="d-flex align-items-center justify-content-center">
+                            <a href="{{ route('forgot-password') }}" class="d-flex align-items-center justify-content-center">
                                 <i class="bx bx-chevron-left scaleX-n1-rtl bx-sm"></i>
-                                Back to login
+                                Back
                             </a>
                         </div>
                     </div>
