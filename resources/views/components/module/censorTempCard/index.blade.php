@@ -4,12 +4,12 @@
             <x-ui.dateRangePicker.index id="filterTanggalTemp" placeholder="Filter Tanggal" class="form-control-sm" />
         </div>
         <div>
-            <x-ui.buttonRefresh.index id="refreshCensorTempData" class="btn-sm" />
+            <x-ui.button.index id="btnFilterTemp" variant="primary" icon="bx bx-filter-alt" class="btn-sm">
+                Filter
+            </x-ui.button.index>
         </div>
         <div>
-            <x-ui.button.index variant="primary" icon="bx bx-download" class="btn-sm">
-                Unduh Data
-            </x-ui.button.index>
+            <x-ui.buttonRefresh.index id="refreshCensorTempData" class="btn-sm" />
         </div>
     </div>
     <div class="card h-100">
@@ -52,40 +52,53 @@
     let temperatureChartInstance = null;
     let temperatureGrowthChartInstance = null;
 
-    document.addEventListener('DOMContentLoaded', function() {
-        // 1. Ambil Element berdasarkan ID yang Anda tulis di HTML component di atas
-        const datePickerTemp = document.getElementById('filterTanggalTemp');
-        const chartElement = document.querySelector("#temperatureChart");
+    // Simpan date range yang dipilih (belum difilter)
+    let selectedTempStartDate = null;
+    let selectedTempEndDate = null;
 
-        // Initialize chart dari dashboards-analytics.js
+    document.addEventListener('DOMContentLoaded', function() {
+        // 1. Ambil Element
+        const datePickerTemp = document.getElementById('filterTanggalTemp');
+
+        // Initialize chart
         initializeTemperatureChart();
         initializeTemperatureGrowthChart();
 
-        // 2. Logika Update Grafik saat Tanggal Dipilih
+        // 2. Simpan date range saat dipilih — belum trigger filter
         if (datePickerTemp) {
             datePickerTemp.addEventListener('date-range-selected', function(e) {
-                // Data dikirim dari component lewat e.detail
                 const {
-                    dateStr,
-                    selectedDates
+                    dateStr
                 } = e.detail;
-
-                console.log('User memilih tanggal:', dateStr);
+                console.log('Tanggal dipilih:', dateStr);
 
                 if (dateStr.includes(' to ')) {
-                    const [startDate, endDate] = dateStr.split(' to ').map(d => d.trim());
-
-                    // Panggil fungsi update Chart
-                    updateTemperatureChartWithDateRange(startDate, endDate);
-                    console.log(`Filter Grafik dari ${startDate} sampai ${endDate}`);
-
+                    const [start, end] = dateStr.split(' to ').map(d => d.trim());
+                    selectedTempStartDate = start;
+                    selectedTempEndDate = end;
+                    console.log(`Range tersimpan: ${start} s/d ${end}. Klik Filter untuk menerapkan.`);
                 } else {
-                    console.log("Menunggu pemilihan tanggal selesai...");
+                    selectedTempStartDate = null;
+                    selectedTempEndDate = null;
                 }
             });
         }
 
-        // 3. Logika Tombol Dropdown Periode Waktu
+        // 3. Tombol Filter — terapkan date range ke chart
+        const btnFilter = document.getElementById('btnFilterTemp');
+        if (btnFilter) {
+            btnFilter.addEventListener('click', function() {
+                if (selectedTempStartDate && selectedTempEndDate) {
+                    updateTemperatureChartWithDateRange(selectedTempStartDate, selectedTempEndDate);
+                    console.log(
+                        `Filter diterapkan: ${selectedTempStartDate} s/d ${selectedTempEndDate}`);
+                } else {
+                    console.warn('Pilih rentang tanggal terlebih dahulu.');
+                }
+            });
+        }
+
+        // 4. Logika Tombol Dropdown Periode Waktu
         const periodeButtons = document.querySelectorAll('[aria-labelledby="growthReportId"]');
         if (periodeButtons && periodeButtons.length > 0) {
             const dropdown = periodeButtons[0];
@@ -110,19 +123,21 @@
             });
         }
 
-        // 4. Logika Tombol Refresh
+        // 5. Logika Tombol Refresh
         const btnRefresh = document.getElementById('refreshCensorTempData');
-        if (btnRefresh && datePickerTemp) {
+        if (btnRefresh) {
             btnRefresh.addEventListener('click', function() {
-                // Clear input tanggal via Flatpickr instance
-                if (datePickerTemp._flatpickr) {
+                // Clear flatpickr dan reset simpanan date range
+                if (datePickerTemp && datePickerTemp._flatpickr) {
                     datePickerTemp._flatpickr.clear();
                 }
+                selectedTempStartDate = null;
+                selectedTempEndDate = null;
 
                 // Reset grafik ke data default
                 loadDefaultTemperatureData();
                 updateTemperatureGrowthChartByPeriode('daily');
-                console.log("Grafik di-refresh ke data default");
+                console.log('Grafik di-refresh ke data default');
             });
         }
 
