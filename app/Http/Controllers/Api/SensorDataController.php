@@ -161,18 +161,26 @@ class SensorDataController extends Controller
     public function getTemperatureData(Request $request)
     {
         try {
+            // Validate date inputs to prevent unexpected values
+            $validated = $request->validate([
+                'start_date' => ['sometimes', 'date_format:Y-m-d'],
+                'end_date'   => ['sometimes', 'date_format:Y-m-d', 'after_or_equal:start_date'],
+                'device_id'  => ['sometimes', 'string', 'max:100'],
+            ]);
+
             $query = Temperature::query();
 
             // Filter by date range if provided
-            if ($request->has('start_date') && $request->has('end_date')) {
-                $startDate = $request->start_date . ' 00:00:00';
-                $endDate = $request->end_date . ' 23:59:59';
-                $query->whereBetween('created_at', [$startDate, $endDate]);
+            if (!empty($validated['start_date']) && !empty($validated['end_date'])) {
+                $query->whereBetween('created_at', [
+                    $validated['start_date'] . ' 00:00:00',
+                    $validated['end_date']   . ' 23:59:59',
+                ]);
             }
 
             // Filter by device if provided
-            if ($request->has('device_id')) {
-                $query->where('device_id', $request->device_id);
+            if (!empty($validated['device_id'])) {
+                $query->where('device_id', $validated['device_id']);
             }
 
             // Get all temperatures ordered by created_at
