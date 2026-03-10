@@ -28,50 +28,55 @@ class SensorDataController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string',
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
             'temperature' => 'required|numeric',
             'humidity' => 'required|numeric',
-            'soil_ph' => 'required|numeric',
+            'soil_ph' => 'nullable|numeric',
         ]);
+
+        // Ensure optional soil_ph is always available as null when omitted.
+        $validated['soil_ph'] = $validated['soil_ph'] ?? null;
 
         DB::beginTransaction();
         try {
             // Find or create device
             $device = Device::firstOrCreate(
                 [
-                    'name' => $request->name,
-                    'latitude' => $request->latitude,
-                    'longitude' => $request->longitude,
+                    'name' => $validated['name'],
+                    'latitude' => $validated['latitude'],
+                    'longitude' => $validated['longitude'],
                 ]
             );
 
             // Update device data if needed
             $device->update([
-                'name' => $request->name,
-                'latitude' => $request->latitude,
-                'longitude' => $request->longitude,
+                'name' => $validated['name'],
+                'latitude' => $validated['latitude'],
+                'longitude' => $validated['longitude'],
             ]);
 
             // Store temperature data
             Temperature::create([
                 'device_id' => $device->id,
-                'value_temp' => $request->temperature,
+                'value_temp' => $validated['temperature'],
             ]);
 
             // Store humidity data
             Humidity::create([
                 'device_id' => $device->id,
-                'value_humidity' => $request->humidity,
+                'value_humidity' => $validated['humidity'],
             ]);
 
-            // Store soil pH data
-            SoilPH::create([
-                'device_id' => $device->id,
-                'value_ph' => $request->soil_ph,
-            ]);
+            // Only store soil pH for devices that send this sensor.
+            if (!is_null($validated['soil_ph'])) {
+                SoilPH::create([
+                    'device_id' => $device->id,
+                    'value_ph' => $validated['soil_ph'],
+                ]);
+            }
 
             DB::commit();
 
