@@ -4,12 +4,12 @@
             <x-ui.dateRangePicker.index id="filterTanggalHum" placeholder="Filter Tanggal" class="form-control-sm" />
         </div>
         <div>
-            <x-ui.buttonRefresh.index id="refreshCensorHumData" class="btn-sm" />
+            <x-ui.button.index id="btnFilterHum" variant="outline-primary" icon="bx bx-filter-alt" class="btn-sm">
+                Filter
+            </x-ui.button.index>
         </div>
         <div>
-            <x-ui.button.index variant="primary" icon="bx bx-download" class="btn-sm">
-                Unduh Data
-            </x-ui.button.index>
+            <x-ui.buttonRefresh.index id="refreshCensorHumData" class="btn-sm" />
         </div>
     </div>
     <div class="card h-100">
@@ -52,10 +52,12 @@
     let humidityChartInstance = null;
     let humidityGrowthChartInstance = null;
 
+    let selectedHumStartDate = null;
+    let selectedHumEndDate = null;
+
     document.addEventListener('DOMContentLoaded', function() {
         // 1. Ambil Element berdasarkan ID yang Anda tulis di HTML component di atas
         const datePickerHum = document.getElementById('filterTanggalHum');
-        const chartElement = document.querySelector("#humidityChart");
 
         // Initialize chart dari dashboards-analytics.js
         initializeHumidityChart();
@@ -67,20 +69,30 @@
                 // Data dikirim dari component lewat e.detail
                 const {
                     dateStr,
-                    selectedDates
                 } = e.detail;
 
                 console.log('User memilih tanggal:', dateStr);
 
                 if (dateStr.includes(' to ')) {
                     const [startDate, endDate] = dateStr.split(' to ').map(d => d.trim());
-
-                    // Panggil fungsi update Chart
-                    updateHumidityChartWithDateRange(startDate, endDate);
+                    selectedHumStartDate = startDate;
+                    selectedHumEndDate = endDate;
                     console.log(`Filter Grafik dari ${startDate} sampai ${endDate}`);
 
                 } else {
-                    console.log("Menunggu pemilihan tanggal selesai...");
+                    selectedHumStartDate = null;
+                    selectedHumEndDate = null;
+                }
+            });
+        }
+
+        const btnFilterHum = document.getElementById('btnFilterHum');
+        if (btnFilterHum) {
+            btnFilterHum.addEventListener('click', function() {
+                if (selectedHumStartDate && selectedHumEndDate) {
+                    updateHumidityChartWithDateRange(selectedHumStartDate, selectedHumEndDate);
+                } else {
+                    alert('Silakan pilih rentang tanggal terlebih dahulu');
                 }
             });
         }
@@ -115,9 +127,11 @@
         if (btnRefresh && datePickerHum) {
             btnRefresh.addEventListener('click', function() {
                 // Clear input tanggal via Flatpickr instance
-                if (datePickerHum._flatpickr) {
+                if (datePickerHum && datePickerHum._flatpickr) {
                     datePickerHum._flatpickr.clear();
                 }
+                selectedHumStartDate = null;
+                selectedHumEndDate = null;
 
                 // Reset grafik ke data default
                 loadDefaultHumidityData();
