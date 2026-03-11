@@ -4,12 +4,12 @@
             <x-ui.dateRangePicker.index id="filterTanggalSoil" placeholder="Filter Tanggal" class="form-control-sm" />
         </div>
         <div>
-            <x-ui.buttonRefresh.index id="refreshCensorSoilData" class="btn-sm" />
+            <x-ui.button.index id="btnFilterSoil" variant="outline-primary" icon="bx bx-filter-alt" class="btn-sm">
+                Filter
+            </x-ui.button.index>
         </div>
         <div>
-            <x-ui.button.index variant="primary" icon="bx bx-download" class="btn-sm">
-                Unduh Data
-            </x-ui.button.index>
+            <x-ui.buttonRefresh.index id="refreshCensorSoilData" class="btn-sm" />
         </div>
     </div>
     <div class="card h-100">
@@ -52,10 +52,12 @@
     let soilPhChartInstance = null;
     let soilPhGrowthChartInstance = null;
 
+    let selectedSoilStartDate = null;
+    let selectedSoilEndDate = null;
+
     document.addEventListener('DOMContentLoaded', function() {
         // 1. Ambil Element berdasarkan ID yang Anda tulis di HTML component di atas
         const datePickerSoil = document.getElementById('filterTanggalSoil');
-        const chartElement = document.querySelector("#soilPhChartContainer");
 
         // Initialize chart dari dashboards-analytics.js
         initializeSoilPhChart();
@@ -67,20 +69,30 @@
                 // Data dikirim dari component lewat e.detail
                 const {
                     dateStr,
-                    selectedDates
                 } = e.detail;
 
                 console.log('User memilih tanggal:', dateStr);
 
                 if (dateStr.includes(' to ')) {
                     const [startDate, endDate] = dateStr.split(' to ').map(d => d.trim());
-
-                    // Panggil fungsi update Chart
-                    updateSoilPhChartWithDateRange(startDate, endDate);
+                    selectedSoilStartDate = startDate;
+                    selectedSoilEndDate = endDate;
                     console.log(`Filter Grafik dari ${startDate} sampai ${endDate}`);
 
                 } else {
-                    console.log("Menunggu pemilihan tanggal selesai...");
+                    selectedSoilStartDate = null;
+                    selectedSoilEndDate = null;
+                }
+            });
+        }
+
+        const btnFilterSoil = document.getElementById('btnFilterSoil');
+        if (btnFilterSoil) {
+            btnFilterSoil.addEventListener('click', function() {
+                if (selectedSoilStartDate && selectedSoilEndDate) {
+                    updateSoilPhChartWithDateRange(selectedSoilStartDate, selectedSoilEndDate);
+                } else {
+                    console.warn('Tanggal tidak valid untuk filter');
                 }
             });
         }
