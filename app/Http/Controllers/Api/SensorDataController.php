@@ -7,8 +7,10 @@ use App\Models\Temperature;
 use App\Models\Humidity;
 use App\Models\SoilPH;
 use App\Models\Device;
+use App\Models\ControlActions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 
 class SensorDataController extends Controller
 {
@@ -70,6 +72,8 @@ class SensorDataController extends Controller
                 'value_humidity' => $validated['humidity'],
             ]);
 
+            $ph_for_anfis = !is_null($validated['soil_ph']) ? $validated['soil_ph'] : 7.0; // Default to neutral if not provided
+
             // Only store soil pH for devices that send this sensor.
             if (!is_null($validated['soil_ph'])) {
                 SoilPH::create([
@@ -78,12 +82,53 @@ class SensorDataController extends Controller
                 ]);
             }
 
+            $pump_status = false;
+            $mist_duration = 0.0;
+            $method = 'ANFIS';
+
+            try {
+                $response = Http::post('http://localhost:5001/predict', [
+                    'temperature' => $validated['temperature'],
+                    'humidity' => $validated['humidity'],
+                    'soil_ph' => $ph_for_anfis,
+                ]);
+
+                if ($response->successful()) {
+                    $result = $response->json();
+                    $score = $result['skor_anfis'] ?? 0.0;
+                    $pump_status = $result['pump_status'] ?? false;
+                    $mist_duration = $result['mist_duration'] ?? 0.0;
+                    $method = 'ANFIS';
+                } else {
+                    $method = 'ERROR_FALLBACK';
+                }
+            } catch (\Exception $e) {
+                $method = 'CONNECTION_FAILED';
+                if ($validated['temperature'] > 30 || $validated['humidity'] < 60) {
+                    $pump_status = true;
+                    $mist_duration = 5.0;
+                }
+            }
+
+            ControlActions::create([
+                'device_id' => $device->id,
+                'pump_status' => $pump_status,
+                'mist_duration' => $mist_duration,
+                'method' => $method,
+            ]);
+
             DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Data sensor berhasil disimpan',
+                'message' => 'Data sensor & tindakan kontrol berhasil disimpan',
                 'device_id' => $device->id,
+                'anfis_decision' => [
+                    'pump_status' => $pump_status,
+                    'mist_duration' => $mist_duration,
+                    'method' => $method,
+                    'skor_anfis' => $score,
+                ],
             ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
