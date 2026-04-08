@@ -38,3 +38,6 @@ Route::get('/device-data/{deviceId}', [DeviceController::class, 'getDeviceData']
 Route::get('/temperatures', [SensorDataController::class, 'getTemperatureData']);
 Route::get('/humidities', [SensorDataController::class, 'getHumidityData']);
 Route::get('/soil-ph', [SensorDataController::class, 'getSoilPHData']);
+
+// ANFIS Prediction Routes
+Route::get('/latest-prediction', [SensorDataController::class, 'getLatestPrediction']);

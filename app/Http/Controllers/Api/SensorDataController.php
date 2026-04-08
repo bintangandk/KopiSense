@@ -357,4 +357,85 @@ class SensorDataController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Get latest ANFIS prediction for dashboard
+     * Returns the most recent control action with sensor data
+     */
+    public function getLatestPrediction(Request $request)
+    {
+        try {
+            $deviceId = $request->query('device_id');
+
+            $query = ControlActions::query()
+                ->with(['device'])
+                ->where('method', 'ANFIS')
+                ->orderBy('created_at', 'desc');
+
+            if ($deviceId) {
+                $query->where('device_id', $deviceId);
+            }
+
+            $latestAction = $query->first();
+
+            if (!$latestAction) {
+                return response()->json([
+                    'success' => true,
+                    'data' => null,
+                    'message' => 'Belum ada prediksi ANFIS',
+                ], 200);
+            }
+
+            // Get the latest sensor readings for this device at the same time
+            $device = $latestAction->device;
+            $temperature = Temperature::where('device_id', $device->id)
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            $humidity = Humidity::where('device_id', $device->id)
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            $soilPH = SoilPH::where('device_id', $device->id)
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            // Determine status berdasarkan ANFIS decision
+            $status = 'Aman';
+            $statusColor = 'success';
+
+            if ($latestAction->pump_status) {
+                if ($latestAction->mist_duration > 10) {
+                    $status = 'Kondisi Buruk';
+                    $statusColor = 'danger';
+                } else {
+                    $status = 'Peringatan';
+                    $statusColor = 'warning';
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'device_id' => $device->id,
+                    'device_name' => $device->name,
+                    'status' => $status,
+                    'status_color' => $statusColor,
+                    'pump_status' => $latestAction->pump_status,
+                    'mist_duration' => $latestAction->mist_duration,
+                    'method' => $latestAction->method,
+                    'temperature' => $temperature?->value_temp,
+                    'humidity' => $humidity?->value_humidity,
+                    'soil_ph' => $soilPH?->value_ph,
+                    'timestamp' => $latestAction->created_at->format('Y-m-d H:i:s'),
+                    'timestamp_readable' => $latestAction->created_at->locale('id')->translatedFormat('l, d F Y H:i'),
+                ]
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil prediksi ANFIS: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
 }
