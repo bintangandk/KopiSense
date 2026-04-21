@@ -15,12 +15,17 @@ use Illuminate\Support\Facades\Http;
 class SensorDataController extends Controller
 {
     /**
-     * Store sensor data from IoT device
+     * Store sensor data from IoT device with ANFIS aggregation
+     * 
+     * This method:
+     * 1. Saves individual sensor data (temperature, humidity, pH) from the device
+     * 2. Aggregates latest data from all SENSOR devices
+     * 3. Calls ANFIS API with aggregated data
+     * 4. Creates a single ControlActions record for the ACTUATOR device
      * 
      * Expected JSON payload:
      * {
-     *     "device_id": "device_001",
-     *     "name": "Device 1",
+     *     "name": "Tunnel 1 Device 1",
      *     "latitude": -6.9271,
      *     "longitude": 107.6412,
      *     "temperature": 28.5,
@@ -44,13 +49,14 @@ class SensorDataController extends Controller
 
         DB::beginTransaction();
         try {
-            // Find or create device
+            // Step 1: Find or create the reporting device (SENSOR type)
             $device = Device::firstOrCreate(
                 [
                     'name' => $validated['name'],
                     'latitude' => $validated['latitude'],
                     'longitude' => $validated['longitude'],
-                ]
+                ],
+                ['device_type' => 'SENSOR']
             );
 
             // Update device data if needed
@@ -58,23 +64,22 @@ class SensorDataController extends Controller
                 'name' => $validated['name'],
                 'latitude' => $validated['latitude'],
                 'longitude' => $validated['longitude'],
+                'device_type' => 'SENSOR',
             ]);
 
-            // Store temperature data
+            // Step 2: Store temperature data for this device
             Temperature::create([
                 'device_id' => $device->id,
                 'value_temp' => $validated['temperature'],
             ]);
 
-            // Store humidity data
+            // Step 3: Store humidity data for this device
             Humidity::create([
                 'device_id' => $device->id,
                 'value_humidity' => $validated['humidity'],
             ]);
 
-            $ph_for_anfis = !is_null($validated['soil_ph']) ? $validated['soil_ph'] : 7.0; // Default to neutral if not provided
-
-            // Only store soil pH for devices that send this sensor.
+            // Step 4: Store soil pH data if provided
             if (!is_null($validated['soil_ph'])) {
                 SoilPH::create([
                     'device_id' => $device->id,
@@ -82,52 +87,51 @@ class SensorDataController extends Controller
                 ]);
             }
 
-            $pump_status = false;
-            $mist_duration = 0.0;
-            $method = 'ANFIS';
+            // Step 5: Aggregate data from all SENSOR devices
+            $aggregatedData = $this->aggregateSensorData();
 
-            try {
-                $response = Http::post('http://localhost:5001/predict', [
-                    'temperature' => $validated['temperature'],
-                    'humidity' => $validated['humidity'],
-                    'soil_ph' => $ph_for_anfis,
-                ]);
-
-                if ($response->successful()) {
-                    $result = $response->json();
-                    $score = $result['skor_anfis'] ?? 0.0;
-                    $pump_status = $result['pump_status'] ?? false;
-                    $mist_duration = $result['mist_duration'] ?? 0.0;
-                    $method = 'ANFIS';
-                } else {
-                    $method = 'ERROR_FALLBACK';
-                }
-            } catch (\Exception $e) {
-                $method = 'CONNECTION_FAILED';
-                if ($validated['temperature'] > 30 || $validated['humidity'] < 60) {
-                    $pump_status = true;
-                    $mist_duration = 5.0;
-                }
+            if (!$aggregatedData) {
+                throw new \Exception('Tidak ada data sensor yang tersedia untuk agregasi');
             }
 
+            // Step 6: Call ANFIS API with aggregated data
+            $anfisResult = $this->callAnfisPredict($aggregatedData);
+
+            $pump_status = $anfisResult['pump_status'] ?? false;
+            $mist_duration = $anfisResult['mist_duration'] ?? 0.0;
+            $method = $anfisResult['method'] ?? 'ANFIS';
+            $score = $anfisResult['skor_anfis'] ?? 0.0;
+
+            // Step 7: Get or create ACTUATOR device for control actions
+            $actuatorDevice = $this->getOrCreateActuatorDevice();
+
+            // Step 8: Create control action record with aggregated sensor data reference
+            $sensorDeviceIds = Device::where('device_type', 'SENSOR')
+                ->pluck('id')
+                ->toArray();
+
             ControlActions::create([
-                'device_id' => $device->id,
+                'device_id' => $actuatorDevice->id,
+                'sensor_device_ids' => $sensorDeviceIds,
                 'pump_status' => $pump_status,
                 'mist_duration' => $mist_duration,
                 'method' => $method,
+                'aggregation_type' => 'AVERAGE',
             ]);
 
             DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Data sensor & tindakan kontrol berhasil disimpan',
+                'message' => 'Data sensor & tindakan kontrol berhasil disimpan dengan agregasi',
                 'device_id' => $device->id,
+                'aggregated_data' => $aggregatedData,
                 'anfis_decision' => [
                     'pump_status' => $pump_status,
                     'mist_duration' => $mist_duration,
                     'method' => $method,
                     'skor_anfis' => $score,
+                    'sensor_count' => count($sensorDeviceIds),
                 ],
             ], 201);
         } catch (\Exception $e) {
@@ -137,6 +141,124 @@ class SensorDataController extends Controller
                 'message' => 'Gagal menyimpan data sensor: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Aggregate latest sensor data from all SENSOR devices
+     * 
+     * Returns: [
+     *     'temperature' => 28.5,
+     *     'humidity' => 67.5,
+     *     'soil_ph' => 6.8,
+     *     'sensor_count' => 6
+     * ]
+     */
+    private function aggregateSensorData()
+    {
+        // Get all SENSOR devices with their latest readings
+        $sensorDevices = Device::where('device_type', 'SENSOR')
+            ->with([
+                'temperatures' => function ($query) {
+                    $query->latest('created_at')->limit(1);
+                },
+                'humidities' => function ($query) {
+                    $query->latest('created_at')->limit(1);
+                },
+                'soilPHs' => function ($query) {
+                    $query->latest('created_at')->limit(1);
+                }
+            ])
+            ->get();
+
+        if ($sensorDevices->isEmpty()) {
+            return null;
+        }
+
+        // Aggregate using AVERAGE method
+        $temperatureValues = [];
+        $humidityValues = [];
+        $phValues = [];
+
+        foreach ($sensorDevices as $device) {
+            if ($device->temperatures->count() > 0) {
+                $temperatureValues[] = $device->temperatures->first()->value_temp;
+            }
+
+            if ($device->humidities->count() > 0) {
+                $humidityValues[] = $device->humidities->first()->value_humidity;
+            }
+
+            if ($device->soilPHs->count() > 0) {
+                $phValues[] = $device->soilPHs->first()->value_ph;
+            }
+        }
+
+        return [
+            'temperature' => !empty($temperatureValues) ? array_sum($temperatureValues) / count($temperatureValues) : 0.0,
+            'humidity' => !empty($humidityValues) ? array_sum($humidityValues) / count($humidityValues) : 0.0,
+            'soil_ph' => !empty($phValues) ? array_sum($phValues) / count($phValues) : 7.0,
+            'sensor_count' => $sensorDevices->count(),
+        ];
+    }
+
+    /**
+     * Call ANFIS prediction API with aggregated sensor data
+     */
+    private function callAnfisPredict(array $aggregatedData)
+    {
+        $pump_status = false;
+        $mist_duration = 0.0;
+        $method = 'ANFIS';
+        $score = 0.0;
+
+        try {
+            $response = Http::post('http://localhost:5001/predict', [
+                'temperature' => $aggregatedData['temperature'],
+                'humidity' => $aggregatedData['humidity'],
+                'soil_ph' => $aggregatedData['soil_ph'],
+            ]);
+
+            if ($response->successful()) {
+                $result = $response->json();
+                $score = $result['skor_anfis'] ?? 0.0;
+                $pump_status = $result['pump_status'] ?? false;
+                $mist_duration = $result['mist_duration'] ?? 0.0;
+                $method = 'ANFIS';
+            } else {
+                $method = 'ERROR_FALLBACK';
+            }
+        } catch (\Exception $e) {
+            $method = 'CONNECTION_FAILED';
+            // Fallback logic when ANFIS unavailable
+            if ($aggregatedData['temperature'] > 30 || $aggregatedData['humidity'] < 60) {
+                $pump_status = true;
+                $mist_duration = 5.0;
+            }
+        }
+
+        return [
+            'pump_status' => $pump_status,
+            'mist_duration' => $mist_duration,
+            'method' => $method,
+            'skor_anfis' => $score,
+        ];
+    }
+
+    /**
+     * Get or create ACTUATOR device for pump control
+     * 
+     * This is the "master" device that receives control decisions
+     */
+    private function getOrCreateActuatorDevice()
+    {
+        return Device::firstOrCreate(
+            ['name' => 'System Actuator - Pump Control', 'device_type' => 'ACTUATOR'],
+            [
+                'latitude' => 0,
+                'longitude' => 0,
+                'device_type' => 'ACTUATOR',
+            ]
+        );
     }
 
     /**

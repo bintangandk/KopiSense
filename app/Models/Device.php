@@ -14,8 +14,13 @@ class Device extends Model
     protected $fillable = [
         'device_id',
         'name',
+        'device_type',
         'latitude',
         'longitude',
+    ];
+
+    protected $casts = [
+        'device_type' => 'string',
     ];
 
     /**
