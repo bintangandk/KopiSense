@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\LocationController;
 use App\Http\Controllers\Api\SensorDataController;
 use App\Http\Controllers\DeviceController;
-
+use App\Http\Controllers\Api\GeminiRecommendationController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -34,7 +34,22 @@ Route::get('/devices/{deviceId}', [SensorDataController::class, 'show']);
 Route::get('/devices-list', [DeviceController::class, 'getDevices']);
 Route::get('/device-data/{deviceId}', [DeviceController::class, 'getDeviceData']);
 
+// Manual pump control - emergency override
+Route::post('/device/{deviceId}/manual-pump-control', [DeviceController::class, 'manualPumpControl']);
+
+// Latest analysis from all devices
+Route::get('/latest-analysis', [DeviceController::class, 'getLatestAnalysis']);
+
+// Latest pH recommendation
+Route::get('/ph-recommendation', [DeviceController::class, 'getLatestPhRecommendation']);
+
 // Sensor Data Filter Routes
 Route::get('/temperatures', [SensorDataController::class, 'getTemperatureData']);
 Route::get('/humidities', [SensorDataController::class, 'getHumidityData']);
 Route::get('/soil-ph', [SensorDataController::class, 'getSoilPHData']);
+
+// ANFIS Prediction Routes
+Route::get('/latest-prediction', [SensorDataController::class, 'getLatestPrediction']);
+
+// Gemini Recommendation Route
+Route::get('/device/{deviceId}/ph-recommendation', [GeminiRecommendationController::class, 'getRecommendation']);

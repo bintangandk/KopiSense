@@ -2,13 +2,27 @@
     <div class="card-body p-4">
 
         <!-- Header -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h6 class="card-title mb-0 fw-bold">Kondisi Lingkungan Greenhouse</h6>
-            <span class="badge bg-success-light text-success" style="font-size: 0.75rem;">
-                <span class="dot d-inline-block rounded-circle me-1"
-                    style="width: 6px; height: 6px; background-color: #28a745;"></span>
-                Aman
-            </span>
+        <div class="mb-4 position-relative">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <h6 class="card-title mb-3 fw-bold">Kondisi Lingkungan Greenhouse</h6>
+
+                    <!-- ANFIS Prediction Status -->
+                    <div id="anfisStatus">
+                        <span class="badge bg-success-light text-success" style="font-size: 0.75rem;">
+                            <span class="dot d-inline-block rounded-circle me-1"
+                                style="width: 6px; height: 6px; background-color: #28a745;"></span>
+                            <span id="statusText">Aman</span>
+                        </span>
+                        <small class="text-muted ms-2" id="predictionScore" style="display: none;"></small>
+                    </div>
+                </div>
+
+                <!-- Arrow Button (Top Right) -->
+                <a href="#" class="action-btn" style="flex-shrink: 0;">
+                    <img src="{{ asset('assets/img/icons/arrow-line.svg') }}" alt="">
+                </a>
+            </div>
         </div>
 
         <!-- Content Row: Image + Threshold -->
@@ -16,8 +30,8 @@
             <!-- Panel Image -->
             <div class="col-md-8 text-center mb-4 mb-md-0">
                 <div style="height: 220px; display: flex; align-items: center; justify-content: center;">
-                    <img src="{{ asset('assets/img/illustrations/greenhouse.png') }}" alt="Greenhouse" class="img-fluid"
-                        style="max-height: 100%; object-fit: contain;">
+                    <img id="greenhouseImage" src="{{ asset('assets/img/illustrations/greenhouse.png') }}"
+                        alt="Greenhouse" class="img-fluid" style="max-height: 100%; object-fit: contain;">
                 </div>
             </div>
 
@@ -89,7 +103,110 @@
         background-color: #d4edda !important;
     }
 
+    .badge.bg-warning-light {
+        background-color: #fff3cd !important;
+    }
+
+    .badge.bg-danger-light {
+        background-color: #f8d7da !important;
+    }
+
     .btn-warning:hover {
         background-color: #ffc107;
     }
 </style>
+
+<script>
+    // Load latest ANFIS prediction on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadLatestPrediction();
+        // Refresh prediction every 30 seconds
+        setInterval(loadLatestPrediction, 30000);
+    });
+
+    /**
+     * Load latest ANFIS prediction from API
+     */
+    function loadLatestPrediction() {
+        const deviceSelect = document.getElementById('deviceSelect');
+        const deviceId = deviceSelect ? deviceSelect.value : null;
+
+        let url = '/api/latest-prediction';
+        if (deviceId) {
+            url += `?device_id=${deviceId}`;
+        }
+
+        fetch(url)
+            .then(response => response.json())
+            .then(result => {
+                if (result.success && result.data) {
+                    updateStatusDisplay(result.data);
+                } else {
+                    console.log('[loadLatestPrediction] No prediction data available');
+                }
+            })
+            .catch(error => {
+                console.error('[loadLatestPrediction] Error:', error);
+            });
+    }
+
+    /**
+     * Update status display based on ANFIS prediction
+     */
+    function updateStatusDisplay(data) {
+        const statusText = document.getElementById('statusText');
+        const predictionScore = document.getElementById('predictionScore');
+        const anfisStatus = document.getElementById('anfisStatus');
+        const statusBadge = anfisStatus.querySelector('.badge');
+        const greenhouseImage = document.getElementById('greenhouseImage');
+
+        // Update status text
+        if (statusText) {
+            statusText.textContent = data.status;
+        }
+
+        // Update greenhouse image based on status
+        if (greenhouseImage) {
+            if (data.status === 'Aman') {
+                greenhouseImage.src = "{{ asset('assets/img/illustrations/greenhouse.png') }}";
+            } else {
+                greenhouseImage.src = "{{ asset('assets/img/illustrations/greenhouse-warning.png') }}";
+            }
+        }
+
+        // Update badge color based on status
+        if (statusBadge) {
+            // Remove all status classes
+            statusBadge.className = 'badge';
+
+            const statusColor = data.status_color || 'success';
+            const colorMap = {
+                'success': 'bg-success-light text-success',
+                'warning': 'bg-warning-light text-warning',
+                'danger': 'bg-danger-light text-danger',
+            };
+
+            statusBadge.classList.add(...(colorMap[statusColor] || colorMap['success']).split(' '));
+
+            // Update dot color
+            const dot = statusBadge.querySelector('.dot');
+            if (dot) {
+                const dotColorMap = {
+                    'success': '#28a745',
+                    'warning': '#ffc107',
+                    'danger': '#dc3545',
+                };
+                dot.style.backgroundColor = dotColorMap[statusColor] || dotColorMap['success'];
+            }
+        }
+
+        // Show prediction info if available
+        if (predictionScore && data.mist_duration !== undefined) {
+            const infoText = `Durasi Semprotan: ${data.mist_duration.toFixed(2)}s`;
+            predictionScore.textContent = infoText;
+            predictionScore.style.display = 'inline-block';
+        }
+
+        console.log('[updateStatusDisplay] Updated status:', data.status, 'Color:', data.status_color);
+    }
+</script>
