@@ -98,10 +98,10 @@
                 </li>
             </ul>
         </li>
-        <li class="menu-item">
+        <li class="menu-item {{ request()->routeIs('environmental-control') ? 'active' : '' }}">
             <a href="{{ route('environmental-control') }}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-cube-alt"></i>
-                <div data-i18n="Basic">Kontrol Lingkungan</div>
+                <div data-i18n="Basic">Analisis Lingkungan</div>
             </a>
         </li>
         @if (auth()->user()->role === 'admin')
