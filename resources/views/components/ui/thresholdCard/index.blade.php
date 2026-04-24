@@ -170,7 +170,7 @@
             if (data.status === 'Aman') {
                 greenhouseImage.src = "{{ asset('assets/img/illustrations/greenhouse.png') }}";
             } else {
-                greenhouseImage.src = "{{ asset('assets/img/illustrations/greenhouse-warning.png') }}";
+                greenhouseImage.src = "{{ asset('assets/img/illustrations/greenhouse.png') }}";
             }
         }
 

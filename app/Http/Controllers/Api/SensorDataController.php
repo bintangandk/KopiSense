@@ -481,22 +481,15 @@ class SensorDataController extends Controller
     }
 
     /**
-     * Get latest ANFIS prediction for dashboard
-     * Returns the most recent control action with sensor data
+     * Get latest ANFIS prediction for dashboard with aggregated sensor data
+     * Returns the most recent control action with aggregated sensor readings from all SENSOR devices
      */
     public function getLatestPrediction(Request $request)
     {
         try {
-            $deviceId = $request->query('device_id');
-
             $query = ControlActions::query()
                 ->with(['device'])
-                ->where('method', 'ANFIS')
                 ->orderBy('created_at', 'desc');
-
-            if ($deviceId) {
-                $query->where('device_id', $deviceId);
-            }
 
             $latestAction = $query->first();
 
@@ -508,47 +501,87 @@ class SensorDataController extends Controller
                 ], 200);
             }
 
-            // Get the latest sensor readings for this device at the same time
-            $device = $latestAction->device;
-            $temperature = Temperature::where('device_id', $device->id)
-                ->orderBy('created_at', 'desc')
-                ->first();
-
-            $humidity = Humidity::where('device_id', $device->id)
-                ->orderBy('created_at', 'desc')
-                ->first();
-
-            $soilPH = SoilPH::where('device_id', $device->id)
-                ->orderBy('created_at', 'desc')
-                ->first();
+            // Get aggregated sensor data from all SENSOR devices
+            $aggregatedData = $this->aggregateSensorData();
+            $sensorDeviceCount = Device::where('device_type', 'SENSOR')->count();
 
             // Determine status berdasarkan ANFIS decision
             $status = 'Aman';
             $statusColor = 'success';
+            $statusMessage = 'Lingkungan dalam kondisi baik';
 
             if ($latestAction->pump_status) {
                 if ($latestAction->mist_duration > 10) {
                     $status = 'Kondisi Buruk';
                     $statusColor = 'danger';
+                    $statusMessage = 'Lingkungan memerlukan perhatian khusus';
                 } else {
                     $status = 'Peringatan';
                     $statusColor = 'warning';
+                    $statusMessage = 'Lingkungan memerlukan penyesuaian';
                 }
+            } else {
+                $status = 'Sesuai';
+                $statusColor = 'success';
+                $statusMessage = 'Lingkungan dalam kondisi baik';
+            }
+
+            // Determine temperature status
+            // Normal: 20-28°C | Perlu Perhatian: 19-20°C or 28-29°C | Tidak Sesuai: <19°C or >29°C
+            $tempStatus = 'Normal';
+            $tempBadge = 'bg-success';
+            if ($aggregatedData['temperature'] >= 29 || $aggregatedData['temperature'] <= 19) {
+                $tempStatus = 'Tidak Sesuai';
+                $tempBadge = 'bg-danger';
+            } elseif (($aggregatedData['temperature'] > 28 && $aggregatedData['temperature'] < 29) || ($aggregatedData['temperature'] >= 19 && $aggregatedData['temperature'] < 20)) {
+                $tempStatus = 'Perlu Perhatian';
+                $tempBadge = 'bg-warning';
+            }
+
+            // Determine humidity status
+            // Normal: 80-100% | Perlu Perhatian: 75-80% | Tidak Sesuai: <75%
+            $humidityStatus = 'Normal';
+            $humidityBadge = 'bg-success';
+            if ($aggregatedData['humidity'] < 75) {
+                $humidityStatus = 'Tidak Sesuai';
+                $humidityBadge = 'bg-danger';
+            } elseif ($aggregatedData['humidity'] >= 75 && $aggregatedData['humidity'] < 80) {
+                $humidityStatus = 'Perlu Perhatian';
+                $humidityBadge = 'bg-warning';
+            }
+
+            // Determine soil pH status
+            $phStatus = 'Normal';
+            $phBadge = 'bg-success';
+            if ($aggregatedData['soil_ph'] < 6 || $aggregatedData['soil_ph'] > 8) {
+                $phStatus = 'Tidak Sesuai';
+                $phBadge = 'bg-danger';
+            } elseif ($aggregatedData['soil_ph'] < 6.5 || $aggregatedData['soil_ph'] > 7.5) {
+                $phStatus = 'Perlu Perhatian';
+                $phBadge = 'bg-warning';
             }
 
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'device_id' => $device->id,
-                    'device_name' => $device->name,
                     'status' => $status,
                     'status_color' => $statusColor,
+                    'status_message' => $statusMessage,
                     'pump_status' => $latestAction->pump_status,
                     'mist_duration' => $latestAction->mist_duration,
                     'method' => $latestAction->method,
-                    'temperature' => $temperature?->value_temp,
-                    'humidity' => $humidity?->value_humidity,
-                    'soil_ph' => $soilPH?->value_ph,
+                    'aggregated_data' => [
+                        'temperature' => round($aggregatedData['temperature'], 2),
+                        'temperature_status' => $tempStatus,
+                        'temperature_badge' => $tempBadge,
+                        'humidity' => round($aggregatedData['humidity'], 2),
+                        'humidity_status' => $humidityStatus,
+                        'humidity_badge' => $humidityBadge,
+                        'soil_ph' => round($aggregatedData['soil_ph'], 2),
+                        'soil_ph_status' => $phStatus,
+                        'soil_ph_badge' => $phBadge,
+                        'sensor_count' => $sensorDeviceCount,
+                    ],
                     'timestamp' => $latestAction->created_at->format('Y-m-d H:i:s'),
                     'timestamp_readable' => $latestAction->created_at->locale('id')->translatedFormat('l, d F Y H:i'),
                 ]
