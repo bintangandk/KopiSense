@@ -31,7 +31,7 @@
                                                 <h4 class="mb-0">
                                                     <span id="tempValue">--</span> <small>°C</small>
                                                 </h4>
-                                                <small class="text-muted">Target: 28-29°C</small>
+                                                <small class="text-muted">Target: 20-28°C</small>
                                             </div>
                                         </div>
                                         {{-- Kelembaban Card --}}
@@ -61,7 +61,7 @@
                                                 <h4 class="mb-0">
                                                     <span id="phValue">--</span>
                                                 </h4>
-                                                <small class="text-muted">Target: 6-7</small>
+                                                <small class="text-muted">Target: 5 - 6.5</small>
                                             </div>
                                         </div>
                                         {{-- Status Keseluruhan --}}
@@ -87,52 +87,26 @@
                                         <h6 class="mb-0">
                                             <i class="bx bx-sparkles"></i> Rekomendasi AI Gemini
                                         </h6>
-                                        <button class="btn btn-sm btn-primary" data-bs-toggle="collapse"
-                                            data-bs-target="#geminiRecommendation" aria-expanded="false">
-                                            <i class="bx bx-analyze"></i> Analisis Soil PH
+                                        <button class="btn btn-sm btn-primary" id="analyzePhButton"
+                                            onclick="loadGeminiRecommendationOnDemand()">
+                                            <i class="bx bx-analyze"></i> Refresh Analisis
                                         </button>
                                     </div>
 
-                                    {{-- Collapse untuk Hasil Rekomendasi --}}
-                                    <div class="collapse" id="geminiRecommendation">
+                                    {{-- Hasil Rekomendasi (Always Visible) --}}
+                                    <div id="geminiRecommendation">
                                         <div class="card card-body bg-light border-start border-4"
                                             style="border-color: #667eea !important;">
+                                            {{-- Loading State --}}
                                             <div class="d-flex gap-2 mb-2">
-                                                <i class="bx bx-loader-alt text-primary"></i>
-                                                <small class="text-muted">Menganalisa pH tanah...</small>
+                                                <i class="bx bx-loader-alt bx-spin text-primary"></i>
+                                                <small class="text-muted">Menganalisa pH tanah dengan AI...</small>
                                             </div>
-                                            <div style="min-height: 200px;">
-                                                {{-- Hasil Analisis --}}
-                                                <div class="mt-2">
-                                                    <h6 class="mb-2">Analisis Kondisi pH Tanah</h6>
-                                                    <p class="mb-2" style="font-size: 0.95rem; line-height: 1.6;">
-                                                        Berdasarkan analisis ANFIS dan data historis, pH tanah Anda saat ini
-                                                        berada
-                                                        pada level optimal (6.8) untuk budidaya tanaman. Tingkat keasaman
-                                                        ini sangat
-                                                        sesuai untuk penyerapan nutrisi yang maksimal.
-                                                    </p>
-
-                                                    <h6 class="mb-2 mt-3">Rekomendasi:</h6>
-                                                    <ul style="font-size: 0.95rem; line-height: 1.8;">
-                                                        <li>Pertahankan pH tanah dalam rentang 6.5-7.0 untuk hasil optimal
-                                                        </li>
-                                                        <li>Monitor kelembaban tanah secara berkala untuk mencegah perubahan
-                                                            pH yang
-                                                            drastis</li>
-                                                        <li>Jika pH menurun di bawah 6.0, pertimbangkan penambahan pupuk
-                                                            kapur</li>
-                                                        <li>Lakukan tes pH tanah minimal sebulan sekali</li>
-                                                    </ul>
-
-                                                    <h6 class="mb-2 mt-3">Aksi yang Disarankan:</h6>
-                                                    <div class="alert alert-info mb-0" role="alert">
-                                                        <i class="bx bx-check-circle"></i> <strong>Status:</strong>
-                                                        Lanjutkan
-                                                        pemeliharaan rutin - tidak ada tindakan khusus yang diperlukan saat
-                                                        ini.
-                                                    </div>
-                                                </div>
+                                            <div style="min-height: 150px;"
+                                                class="d-flex align-items-center justify-content-center">
+                                                <small class="text-muted">
+                                                    <i class="bx bx-loader-alt bx-spin"></i> Loading
+                                                </small>
                                             </div>
                                         </div>
                                     </div>
@@ -190,6 +164,264 @@
 
     {{-- JavaScript for Manual Pump Control & ANFIS Data Display --}}
     <script>
+        // ========== CLIENT-SIDE RATE LIMITING FOR GEMINI API ==========
+        let geminiRequestInProgress = false;
+        let lastGeminiRequestTime = 0;
+        const GEMINI_MIN_REQUEST_INTERVAL = 3000; // Minimum 3 seconds between requests
+
+        /**
+         * Check if Gemini request is allowed (rate limiting)
+         */
+        function isGeminiRequestAllowed() {
+            if (geminiRequestInProgress) {
+                console.warn('⏱️ Gemini request already in progress - blocking duplicate');
+                return false;
+            }
+
+            const now = Date.now();
+            const timeSinceLastRequest = now - lastGeminiRequestTime;
+
+            if (timeSinceLastRequest < GEMINI_MIN_REQUEST_INTERVAL) {
+                const remainingMs = GEMINI_MIN_REQUEST_INTERVAL - timeSinceLastRequest;
+                console.warn('⏱️ Rate limited - wait another ' + Math.ceil(remainingMs / 1000) + 's');
+                return false;
+            }
+
+            return true;
+        }
+        /**
+         * Load Gemini AI Recommendation for aggregated soil pH
+         */
+        function loadGeminiRecommendation() {
+            // Prevent auto-load if a manual request is in progress
+            if (geminiRequestInProgress) {
+                console.log('⏳ Melewati auto-load Gemini karena request manual sedang berjalan.');
+                return;
+            }
+
+            geminiRequestInProgress = true;
+            fetch('/api/ph-recommendation-aggregated', {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('🤖 Gemini Recommendation loaded:', data);
+
+                    if (data.success) {
+                        updateGeminiDisplay(data);
+                    } else {
+                        showGeminiError(data.message || 'Gagal memuat rekomendasi Gemini');
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Error fetching Gemini recommendation:', error);
+                    showGeminiError('Gagal menghubungi server rekomendasi');
+                })
+                .finally(() => {
+                    geminiRequestInProgress = false;
+                });
+        }
+
+        /**
+         * Load Gemini AI Recommendation ON-DEMAND (user clicks button)
+         * POST to optimized endpoint with rate limiting & caching
+         */
+        function loadGeminiRecommendationOnDemand() {
+            // ========== CLIENT-SIDE RATE LIMITING ==========
+            if (!isGeminiRequestAllowed()) {
+                const remainingMs = GEMINI_MIN_REQUEST_INTERVAL - (Date.now() - lastGeminiRequestTime);
+                const message = '⏳ Terlalu cepat - tunggu ' + Math.ceil(remainingMs / 1000) +
+                    ' detik sebelum analisis lagi';
+
+                // 🔥 SOLUSI: Cek apakah fungsi ada, jika tidak gunakan alert standar
+                if (typeof showNotification === 'function') {
+                    showNotification('warning', message);
+                } else {
+                    alert(message); // Fallback bawaan browser
+                }
+                return;
+            }
+
+            console.log('📊 Loading on-demand Gemini recommendation...');
+
+            geminiRequestInProgress = true;
+            lastGeminiRequestTime = Date.now();
+
+            const button = document.getElementById('analyzePhButton');
+            const originalText = button.innerHTML;
+            button.disabled = true;
+            button.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Menganalisa...';
+
+            fetch('/api/ph-recommendation-on-demand', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                    },
+                    body: JSON.stringify({})
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('🎯 On-demand Gemini Recommendation loaded:', data);
+
+                    if (data.success) {
+                        updateGeminiDisplay(data);
+                    } else {
+                        showGeminiError(data.message || 'Gagal memuat rekomendasi Gemini');
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Error fetching on-demand Gemini recommendation:', error);
+                    showGeminiError('Gagal menghubungi server rekomendasi: ' + error.message);
+                })
+                .finally(() => {
+                    button.disabled = false;
+                    button.innerHTML = originalText;
+                    geminiRequestInProgress = false;
+                });
+        }
+
+        /**
+         * Update Gemini recommendation display
+         */
+        function updateGeminiDisplay(data) {
+            const geminiContainer = document.querySelector('#geminiRecommendation .card-body');
+
+            if (!geminiContainer) {
+                console.warn('⚠️ Gemini container not found');
+                return;
+            }
+
+            // Determine badge and status based on pH status
+            const phStatus = data.status;
+            const badgeClass = phStatus === 'Aman' ? 'bg-success' :
+                phStatus === 'Peringatan' ? 'bg-warning' : 'bg-danger';
+            const statusIcon = phStatus === 'Aman' ? 'bx-check-circle' : 'bx-exclamation-circle';
+
+            // Determine cache/API status indicator
+            let cacheStatusBadge = '';
+            let cacheStatusColor = 'secondary';
+            let cacheStatusText = '';
+
+            if (data.recommendation_type === 'static') {
+                cacheStatusBadge = '✅ pH Normal';
+                cacheStatusColor = 'success';
+                cacheStatusText = 'Tanah dalam kondisi optimal';
+            } else if (data.recommendation_type === 'ai_fresh') {
+                cacheStatusBadge = '🚀 Fresh API Call';
+                cacheStatusColor = 'info';
+                cacheStatusText = 'Analisis baru dari Gemini AI (disimpan cache 7 hari)';
+            } else if (data.recommendation_type === 'ai_cached_7d' || data.recommendation_type === 'ai_cached_24h') {
+                cacheStatusBadge = '💾 Cached 7d';
+                cacheStatusColor = 'info';
+                cacheStatusText = 'Hasil analisis dari cache (max 7 hari)';
+            } else if (data.recommendation_type === 'fallback_rate_limited') {
+                cacheStatusBadge = '⏱️ Rate Limited';
+                cacheStatusColor = 'warning';
+                cacheStatusText = 'Max 1 analisis per 2 menit - menggunakan rekomendasi fallback';
+            } else if (data.recommendation_type === 'fallback_quota_exhausted') {
+                cacheStatusBadge = '❌ Quota Habis';
+                cacheStatusColor = 'danger';
+                cacheStatusText = 'Free Tier quota telah mencapai limit harian - gunakan rekomendasi fallback';
+            } else if (data.recommendation_type === 'fallback_api_error' || data.recommendation_type === 'fallback') {
+                cacheStatusBadge = '📋 Fallback';
+                cacheStatusColor = 'warning';
+                cacheStatusText = 'Rekomendasi default (API tidak tersedia saat ini)';
+            }
+
+            // Build HTML content
+            const htmlContent = `
+                <div class="d-flex gap-2 align-items-center mb-3">
+                    <i class="bx bx-loader-alt text-primary"></i>
+                    <small class="text-muted">pH Rata-rata: <strong>${data.ph}</strong> (dari ${data.sensor_count} sensor)</small>
+                </div>
+                <div style="min-height: 150px;">
+                    {{-- Rekomendasi Status --}}
+                    <div class="mb-3">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <span class="badge ${badgeClass}">
+                                <i class="bx ${statusIcon}"></i> ${phStatus}
+                            </span>
+                            <span class="badge bg-${cacheStatusColor}">
+                                ${cacheStatusBadge}
+                            </span>
+                        </div>
+                        <small class="text-muted">${cacheStatusText}</small>
+                    </div>
+
+                    {{-- Rekomendasi Text --}}
+                    <div class="mb-3">
+                        <p style="font-size: 0.95rem; line-height: 1.6; white-space: pre-wrap;">
+                            ${escapeHtml(data.recommendation)}
+                        </p>
+                    </div>
+
+                    {{-- Action Badge --}}
+                    <div class="alert ${phStatus === 'Aman' ? 'alert-success' : 'alert-warning'} mb-0" role="alert">
+                        <i class="bx bx-check-circle"></i> 
+                        <strong>${phStatus === 'Aman' ? 'Kondisi Optimal' : 'Perlu Tindakan'}:</strong>
+                        ${phStatus === 'Aman' ? 
+                            'Lanjutkan pemeliharaan rutin - lingkungan optimal untuk kopi Robusta.' : 
+                            'Tindakan penyesuaian pH disarankan untuk hasil optimal.'}
+                    </div>
+
+                    ${data.recommendation_type === 'fallback_quota_exhausted' ? 
+                        `<div class="alert alert-danger mt-3 mb-0" role="alert">
+                                                                                                    <i class="bx bx-error-circle"></i> 
+                                                                                                    <strong>❌ Quota Gemini Free Tier Habis</strong><br>
+                                                                                                    <small><strong>Penyebab:</strong> API Gemini memiliki limit request harian untuk tier gratis (limit: 0 reached).<br>
+                                                                                                    <strong>Solusi:</strong><br>
+                                                                                                    1. Coba lagi besok ketika quota reset (24 jam)<br>
+                                                                                                    2. Upgrade ke plan berbayar di <a href="https://ai.google.dev" target="_blank">ai.google.dev</a><br>
+                                                                                                    3. Gunakan rekomendasi fallback ini sebagai panduan sementara</small>
+                                                                                                </div>` : 
+                        (data.message && (data.message.includes('429') || data.message.includes('quota') || data.message.includes('Quota')) ? 
+                        `<div class="alert alert-warning mt-3 mb-0" role="alert">
+                                                                                                    <i class="bx bx-info-circle"></i> 
+                                                                                                    <strong>⚠️ Quota Gemini Free Tier Habis</strong><br>
+                                                                                                    <small>API Gemini memiliki limit penggunaan harian untuk tier gratis. Coba lagi nanti atau upgrade ke plan berbayar. Rekomendasi ini menggunakan logika fallback otomatis.</small>
+                                                                                                </div>` : '')}
+                </div>
+            `;
+
+            geminiContainer.innerHTML = htmlContent;
+            console.log('✅ Gemini display updated with cache status:', data.cache_status);
+        }
+
+        /**
+         * Show error in Gemini display
+         */
+        function showGeminiError(message) {
+            const geminiContainer = document.querySelector('#geminiRecommendation .card-body');
+
+            if (!geminiContainer) {
+                return;
+            }
+
+            geminiContainer.innerHTML = `
+                <div class="alert alert-danger mb-0" role="alert">
+                    <i class="bx bx-error-circle"></i> <strong>Error:</strong> ${message}
+                </div>
+            `;
+        }
+
+        /**
+         * Escape HTML to prevent XSS
+         */
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
         /**
          * Fetch latest ANFIS prediction and update UI
          */
@@ -407,10 +639,13 @@
 
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('🚀 Page loaded - Initializing ANFIS data and event listeners');
+            console.log('🚀 Page loaded - Initializing ANFIS data and Gemini recommendation');
 
             // Load ANFIS data on page load
             loadAnfisData();
+
+            // Load Gemini recommendation on page load
+            loadGeminiRecommendation();
 
             // Refresh ANFIS data every 30 seconds
             setInterval(loadAnfisData, 30000);

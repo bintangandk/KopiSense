@@ -51,5 +51,8 @@ Route::get('/soil-ph', [SensorDataController::class, 'getSoilPHData']);
 // ANFIS Prediction Routes
 Route::get('/latest-prediction', [SensorDataController::class, 'getLatestPrediction']);
 
-// Gemini Recommendation Route
-Route::get('/device/{deviceId}/ph-recommendation', [GeminiRecommendationController::class, 'getRecommendation']);
+// Aggregated Gemini Recommendation (untuk dashboard - auto load, no rate limit)
+Route::get('/ph-recommendation-aggregated', [GeminiRecommendationController::class, 'getAggregatedRecommendation']);
+
+// On-demand Gemini Recommendation (user clicks button - rate limited 1/hour, 24h cache, optimize tokens)
+Route::post('/ph-recommendation-on-demand', [GeminiRecommendationController::class, 'getRecommendationOnDemand']);

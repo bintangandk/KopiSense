@@ -11,9 +11,9 @@
                     </div>
                     <div class="col-lg-5">
                         @include('components.ui.thresholdCard.index', [
-                            'temperature' => $temperature ?? '28-30',
-                            'humidity' => $humidity ?? '60-80',
-                            'soilPH' => $soilPH ?? '6-8',
+                            'temperature' => $temperature ?? '20-28',
+                            'humidity' => $humidity ?? '70-90',
+                            'soilPH' => $soilPH ?? '6-6.5',
                         ])
                     </div>
                 </div>
