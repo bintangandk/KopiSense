@@ -212,7 +212,7 @@ class SensorDataController extends Controller
         $score = 0.0;
 
         try {
-            $response = Http::post('http://localhost:5001/predict', [
+            $response = Http::post('http://fuzzy.kopisense.research-ai.my.id/predict', [
                 'temperature' => $aggregatedData['temperature'],
                 'humidity' => $aggregatedData['humidity'],
                 'soil_ph' => $aggregatedData['soil_ph'],
