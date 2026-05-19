@@ -89,24 +89,28 @@
                                         </h6>
                                         <button class="btn btn-sm btn-primary" id="analyzePhButton"
                                             onclick="loadGeminiRecommendationOnDemand()">
-                                            <i class="bx bx-analyze"></i> Refresh Analisis
+                                            <i class="bx bx-analyze"></i>Analisis pH Tanah
                                         </button>
                                     </div>
 
                                     {{-- Hasil Rekomendasi (Always Visible) --}}
                                     <div id="geminiRecommendation">
-                                        <div class="card card-body bg-light border-start border-4"
-                                            style="border-color: #667eea !important;">
-                                            {{-- Loading State --}}
-                                            <div class="d-flex gap-2 mb-2">
-                                                <i class="bx bx-loader-alt bx-spin text-primary"></i>
-                                                <small class="text-muted">Menganalisa pH tanah dengan AI...</small>
-                                            </div>
-                                            <div style="min-height: 150px;"
-                                                class="d-flex align-items-center justify-content-center">
-                                                <small class="text-muted">
-                                                    <i class="bx bx-loader-alt bx-spin"></i> Loading
-                                                </small>
+                                        <div
+                                            class="card card-body bg-light border-full border-2 border-secondary rounded-2">
+                                            <div
+                                                class="d-flex flex-column align-items-center justify-content-center h-100 text-center">
+
+                                                <div class="mb-3">
+                                                    <img src="{{ asset('assets/img/illustrations/AI-Agent.svg') }}"
+                                                        alt="AI Agent" class="img-fluid" style="max-width: 300px;">
+                                                </div>
+
+                                                <p class="text-muted mb-0" style="font-size: 0.95rem; line-height: 1.6;">
+                                                    Silahkan Klik Button <strong>Analisis pH Tanah</strong> untuk
+                                                    mendapatkan
+                                                    rekomendasi penanganan pada pH tanah dari Gemini AI
+                                                </p>
+
                                             </div>
                                         </div>
                                     </div>
@@ -189,40 +193,7 @@
 
             return true;
         }
-        /**
-         * Load Gemini AI Recommendation for aggregated soil pH
-         */
-        function loadGeminiRecommendation() {
-            // Prevent auto-load if a manual request is in progress
-            if (geminiRequestInProgress) {
-                console.log('⏳ Melewati auto-load Gemini karena request manual sedang berjalan.');
-                return;
-            }
 
-            geminiRequestInProgress = true;
-            fetch('/api/ph-recommendation-aggregated', {
-                    headers: {
-                        'Accept': 'application/json'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    console.log('🤖 Gemini Recommendation loaded:', data);
-
-                    if (data.success) {
-                        updateGeminiDisplay(data);
-                    } else {
-                        showGeminiError(data.message || 'Gagal memuat rekomendasi Gemini');
-                    }
-                })
-                .catch(error => {
-                    console.error('❌ Error fetching Gemini recommendation:', error);
-                    showGeminiError('Gagal menghubungi server rekomendasi');
-                })
-                .finally(() => {
-                    geminiRequestInProgress = false;
-                });
-        }
 
         /**
          * Load Gemini AI Recommendation ON-DEMAND (user clicks button)
@@ -239,7 +210,11 @@
                 if (typeof showNotification === 'function') {
                     showNotification('warning', message);
                 } else {
-                    alert(message); // Fallback bawaan browser
+                    swal.fire({
+                        icon: 'warning',
+                        title: 'Terlalu Cepat',
+                        text: message
+                    });
                 }
                 return;
             }
@@ -370,20 +345,20 @@
 
                     ${data.recommendation_type === 'fallback_quota_exhausted' ? 
                         `<div class="alert alert-danger mt-3 mb-0" role="alert">
-                                                                                                    <i class="bx bx-error-circle"></i> 
-                                                                                                    <strong>❌ Quota Gemini Free Tier Habis</strong><br>
-                                                                                                    <small><strong>Penyebab:</strong> API Gemini memiliki limit request harian untuk tier gratis (limit: 0 reached).<br>
-                                                                                                    <strong>Solusi:</strong><br>
-                                                                                                    1. Coba lagi besok ketika quota reset (24 jam)<br>
-                                                                                                    2. Upgrade ke plan berbayar di <a href="https://ai.google.dev" target="_blank">ai.google.dev</a><br>
-                                                                                                    3. Gunakan rekomendasi fallback ini sebagai panduan sementara</small>
-                                                                                                </div>` : 
+                                                                                                                                                            <i class="bx bx-error-circle"></i> 
+                                                                                                                                                                <strong>❌ Quota Gemini Free Tier Habis</strong><br>
+                                                                                                                                                                    <small><strong>Penyebab:</strong> API Gemini memiliki limit request harian untuk tier gratis (limit: 0 reached).<br>
+                                                                                                                                                                        <strong>Solusi:</strong><br>
+                                                                                                                                                                            1. Coba lagi besok ketika quota reset (24 jam)<br>
+                                                                                                                                                                            2. Upgrade ke plan berbayar di <a href="https://ai.google.dev" target="_blank">ai.google.dev</a><br>
+                                                                                                                                                                            3. Gunakan rekomendasi fallback ini sebagai panduan sementara</small>
+                                                                                                                                                        </div>` : 
                         (data.message && (data.message.includes('429') || data.message.includes('quota') || data.message.includes('Quota')) ? 
                         `<div class="alert alert-warning mt-3 mb-0" role="alert">
-                                                                                                    <i class="bx bx-info-circle"></i> 
-                                                                                                    <strong>⚠️ Quota Gemini Free Tier Habis</strong><br>
-                                                                                                    <small>API Gemini memiliki limit penggunaan harian untuk tier gratis. Coba lagi nanti atau upgrade ke plan berbayar. Rekomendasi ini menggunakan logika fallback otomatis.</small>
-                                                                                                </div>` : '')}
+                                                                                                                                                                                                                                                        <i class="bx bx-info-circle"></i> 
+                                                                                                                                                                                                                                                        <strong>⚠️ Quota Gemini Free Tier Habis</strong><br>
+                                                                                                                                                                                                                                                        <small>API Gemini memiliki limit penggunaan harian untuk tier gratis. Coba lagi nanti atau upgrade ke plan berbayar. Rekomendasi ini menggunakan logika fallback otomatis.</small>
+                                                                                                                                                                                                                                                    </div>` : '')}
                 </div>
             `;
 
@@ -639,13 +614,10 @@
 
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('🚀 Page loaded - Initializing ANFIS data and Gemini recommendation');
+            console.log('🚀 Page loaded - Initializing ANFIS data');
 
             // Load ANFIS data on page load
             loadAnfisData();
-
-            // Load Gemini recommendation on page load
-            loadGeminiRecommendation();
 
             // Refresh ANFIS data every 30 seconds
             setInterval(loadAnfisData, 30000);
