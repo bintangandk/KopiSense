@@ -96,19 +96,32 @@ class GeminiRecommendationController extends Controller
             // No cache, try calling Gemini API
             Log::info('📤 [GeminiRecommendation] No cached recommendation - calling Gemini API');
 
-            $prompt = "Kamu adalah ahli agronomi kopi robusta. Data sensor IoT greenhouse saya:
-                        - Jumlah sensor: {$sensorCount} device
-                        - pH tanah rata-rata: {$currentPh} (rentang optimal bibit robusta: 5.5-6.5, ref: Puslitkoka)
+            $prompt = "Kamu adalah ahli agronomi kopi robusta yang berpengalaman dalam budidaya greenhouse.
+                        KONTEKS SISTEM:
+                        - Bibit kopi robusta (Coffea canephora) ditanam dalam polybag individual
+                        - Sensor pH IoT ({$sensorCount} unit) dipasang pada 1 sampel polybag sebagai titik referensi
+                        - pH terbaca pada polybag sampel: {$currentPh}
+                        - Rentang pH optimal bibit robusta: 5.5-6.5 (Puslitkoka / ICCRI)
 
-                        Berikan rekomendasi koreksi pH dalam format teks biasa bernomor (tanpa markdown):
+                        BATASAN PENTING YANG HARUS KAMU PAHAMI:
+                        - Data pH ini berasal dari 1 polybag sampel, bukan representasi seluruh greenhouse
+                        - Rekomendasimu harus mencerminkan keterbatasan ini
+                        - Jangan membuat asumsi tentang kondisi polybag lain yang tidak terukur
+                        - Berikan rekomendasi yang applicable untuk koreksi per-polybag, bukan area lahan luas
 
-                        1. STATUS: kondisi pH saat ini dan dampaknya pada bibit robusta
-                        2. TINDAKAN 1: nama bahan + dosis + cara aplikasi + waktu tunggu
-                        3. TINDAKAN 2: nama bahan + dosis + cara aplikasi + waktu tunggu  
-                        4. PERINGATAN: 1 risiko spesifik di lingkungan greenhouse
-                        5. TARGET: pH yang harus dicapai dan frekuensi cek sensor
+                        Berikan rekomendasi dalam teks biasa bernomor, tanpa markdown, maksimal 220 kata:
 
-                        Jawab maksimal 200 kata, bahasa Indonesia, teknis namun jelas.";
+                        1. STATUS: Nyatakan kondisi pH {$currentPh} pada polybag sampel, apakah terlalu asam atau basa, dan dampak spesifiknya terhadap bibit robusta dalam polybag.
+
+                        2. TINDAKAN 1: Satu metode koreksi pH yang sesuai untuk media tanam polybag (bukan lahan terbuka). Sertakan nama bahan, dosis per polybag, dan cara aplikasinya.
+
+                        3. TINDAKAN 2: Alternatif metode koreksi kedua untuk polybag. Sertakan nama bahan, dosis, dan cara aplikasi.
+
+                        4. PERINGATAN SAMPLING: Ingatkan bahwa pH polybag lain kemungkinan berbeda, dan rekomendasikan cara sederhana untuk pengecekan manual pH pada beberapa polybag lain sebagai validasi.
+
+                        5. TARGET: pH yang harus dicapai dalam polybag dan frekuensi pemantauan sensor yang disarankan.
+
+                        Gunakan bahasa Indonesia yang teknis namun mudah dipahami.";
 
             $geminiResult = $this->callGeminiApi($prompt);
 
@@ -437,7 +450,32 @@ class GeminiRecommendationController extends Controller
             // ========== STEP 5: Call Gemini API (allowed) ==========
             Log::info('🚀 [OnDemandRecommendation] Calling Gemini API - within rate limit');
 
-            $prompt = "Saya adalah petani bibit kopi robusta di greenhouse dengan sistem IoT. Saat ini sensor saya (dari {$sensorCount} device) mendeteksi pH tanah rata-rata berada di angka {$currentPh}. Angka ini di luar batas normal (5.5-6.5). Sebagai ahli pertanian, berikan 2-3 langkah praktis, murah, dan singkat untuk menormalkan kembali pH tanah tersebut. Berikan dalam format teks biasa, tidak perlu markdown kompleks. Singkat dan langsung ke solusi.";
+            $prompt = "Kamu adalah ahli agronomi kopi robusta yang berpengalaman dalam budidaya greenhouse.
+                        KONTEKS SISTEM:
+                        - Bibit kopi robusta (Coffea canephora) ditanam dalam polybag individual
+                        - Sensor pH IoT ({$sensorCount} unit) dipasang pada 1 sampel polybag sebagai titik referensi
+                        - pH terbaca pada polybag sampel: {$currentPh}
+                        - Rentang pH optimal bibit robusta: 5.5-6.5 (Puslitkoka / ICCRI)
+
+                        BATASAN PENTING YANG HARUS KAMU PAHAMI:
+                        - Data pH ini berasal dari 1 polybag sampel, bukan representasi seluruh greenhouse
+                        - Rekomendasimu harus mencerminkan keterbatasan ini
+                        - Jangan membuat asumsi tentang kondisi polybag lain yang tidak terukur
+                        - Berikan rekomendasi yang applicable untuk koreksi per-polybag, bukan area lahan luas
+
+                        Berikan rekomendasi dalam teks biasa bernomor, tanpa markdown, maksimal 220 kata:
+
+                        1. STATUS: Nyatakan kondisi pH {$currentPh} pada polybag sampel, apakah terlalu asam atau basa, dan dampak spesifiknya terhadap bibit robusta dalam polybag.
+
+                        2. TINDAKAN 1: Satu metode koreksi pH yang sesuai untuk media tanam polybag (bukan lahan terbuka). Sertakan nama bahan, dosis per polybag, dan cara aplikasinya.
+
+                        3. TINDAKAN 2: Alternatif metode koreksi kedua untuk polybag. Sertakan nama bahan, dosis, dan cara aplikasi.
+
+                        4. PERINGATAN SAMPLING: Ingatkan bahwa pH polybag lain kemungkinan berbeda, dan rekomendasikan cara sederhana untuk pengecekan manual pH pada beberapa polybag lain sebagai validasi.
+
+                        5. TARGET: pH yang harus dicapai dalam polybag dan frekuensi pemantauan sensor yang disarankan.
+
+                        Gunakan bahasa Indonesia yang teknis namun mudah dipahami.";
 
             $geminiResult = $this->callGeminiApi($prompt);
 
