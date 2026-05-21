@@ -82,8 +82,9 @@
                             @csrf
                             <div class="mb-3">
                                 <label for="email" class="form-label">Email or Username</label>
-                                <input type="text" class="form-control @error('email-username') is-invalid @enderror" id="email" name="email-username"
-                                    placeholder="Enter your email or username" value="{{ old('email-username') }}" autofocus />
+                                <input type="text" class="form-control @error('email-username') is-invalid @enderror"
+                                    id="email" name="email-username" placeholder="Enter your email or username"
+                                    value="{{ old('email-username') }}" autofocus />
                                 @error('email-username')
                                     <span class="invalid-feedback">{{ $message }}</span>
                                 @enderror
@@ -96,7 +97,8 @@
                                     </a>
                                 </div>
                                 <div class="input-group input-group-merge">
-                                    <input type="password" id="password" class="form-control @error('password') is-invalid @enderror" name="password"
+                                    <input type="password" id="password"
+                                        class="form-control @error('password') is-invalid @enderror" name="password"
                                         placeholder="&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;"
                                         aria-describedby="password" />
                                     <span class="input-group-text cursor-pointer"><i class="bx bx-hide"></i></span>
@@ -120,12 +122,12 @@
                             </div>
                         </form>
 
-                        <p class="text-center">
+                        {{-- <p class="text-center">
                             <span>New on our platform?</span>
                             <a href="{{ route('register') }}">
                                 <span>Create an account</span>
                             </a>
-                        </p>
+                        </p> --}}
                     </div>
                 </div>
                 <!-- /Register -->
