@@ -539,13 +539,13 @@ class SensorDataController extends Controller
             }
 
             // Determine humidity status
-            // Normal: 80-100% | Perlu Perhatian: 75-80% | Tidak Sesuai: <75%
+            // Normal: 70-100% | Perlu Perhatian: 70-75% | Tidak Sesuai: <70%
             $humidityStatus = 'Normal';
             $humidityBadge = 'bg-success';
-            if ($aggregatedData['humidity'] < 75) {
+            if ($aggregatedData['humidity'] < 70) {
                 $humidityStatus = 'Tidak Sesuai';
                 $humidityBadge = 'bg-danger';
-            } elseif ($aggregatedData['humidity'] >= 75 && $aggregatedData['humidity'] < 80) {
+            } elseif ($aggregatedData['humidity'] >= 70 && $aggregatedData['humidity'] < 75) {
                 $humidityStatus = 'Perlu Perhatian';
                 $humidityBadge = 'bg-warning';
             }
