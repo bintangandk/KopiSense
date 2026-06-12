@@ -34,7 +34,7 @@
                     </h1>
 
                     <small class="stat-desc">
-                        Batas aman suhu adalah 28-30 °C
+                        Batas aman suhu adalah 20-28 °C
                     </small>
                 </div>
             </div>
@@ -54,7 +54,7 @@
                     </h1>
 
                     <small class="stat-desc">
-                        Batas aman kelembapan 28-30 %
+                        Batas aman kelembapan 70-90 %
                     </small>
                 </div>
             </div>
@@ -74,7 +74,7 @@
                     </h1>
 
                     <small class="stat-desc">
-                        Batas aman level pH tanah adalah 6 - 8
+                        Batas aman level pH tanah adalah 5,5 - 6,5
                     </small>
                 </div>
             </div>

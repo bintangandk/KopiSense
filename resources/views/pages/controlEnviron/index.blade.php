@@ -46,7 +46,7 @@
                                                 <h4 class="mb-0">
                                                     <span id="humidityValue">--</span> <small>%</small>
                                                 </h4>
-                                                <small class="text-muted">Target: 80-90%</small>
+                                                <small class="text-muted">Target: 70-90%</small>
                                             </div>
                                         </div>
                                         {{-- pH Tanah Card --}}
@@ -61,7 +61,7 @@
                                                 <h4 class="mb-0">
                                                     <span id="phValue">--</span>
                                                 </h4>
-                                                <small class="text-muted">Target: 5 - 6.5</small>
+                                                <small class="text-muted">Target: 5,5 - 6,5</small>
                                             </div>
                                         </div>
                                         {{-- Status Keseluruhan --}}
@@ -345,20 +345,20 @@
 
                     ${data.recommendation_type === 'fallback_quota_exhausted' ? 
                         `<div class="alert alert-danger mt-3 mb-0" role="alert">
-                                                                                                                                                            <i class="bx bx-error-circle"></i> 
-                                                                                                                                                                <strong>❌ Quota Gemini Free Tier Habis</strong><br>
-                                                                                                                                                                    <small><strong>Penyebab:</strong> API Gemini memiliki limit request harian untuk tier gratis (limit: 0 reached).<br>
-                                                                                                                                                                        <strong>Solusi:</strong><br>
-                                                                                                                                                                            1. Coba lagi besok ketika quota reset (24 jam)<br>
-                                                                                                                                                                            2. Upgrade ke plan berbayar di <a href="https://ai.google.dev" target="_blank">ai.google.dev</a><br>
-                                                                                                                                                                            3. Gunakan rekomendasi fallback ini sebagai panduan sementara</small>
-                                                                                                                                                        </div>` : 
+                                                                                                                                                                    <i class="bx bx-error-circle"></i> 
+                                                                                                                                                                        <strong>❌ Quota Gemini Free Tier Habis</strong><br>
+                                                                                                                                                                            <small><strong>Penyebab:</strong> API Gemini memiliki limit request harian untuk tier gratis (limit: 0 reached).<br>
+                                                                                                                                                                                <strong>Solusi:</strong><br>
+                                                                                                                                                                                    1. Coba lagi besok ketika quota reset (24 jam)<br>
+                                                                                                                                                                                    2. Upgrade ke plan berbayar di <a href="https://ai.google.dev" target="_blank">ai.google.dev</a><br>
+                                                                                                                                                                                    3. Gunakan rekomendasi fallback ini sebagai panduan sementara</small>
+                                                                                                                                                                </div>` : 
                         (data.message && (data.message.includes('429') || data.message.includes('quota') || data.message.includes('Quota')) ? 
                         `<div class="alert alert-warning mt-3 mb-0" role="alert">
-                                                                                                                                                                                                                                                        <i class="bx bx-info-circle"></i> 
-                                                                                                                                                                                                                                                        <strong>⚠️ Quota Gemini Free Tier Habis</strong><br>
-                                                                                                                                                                                                                                                        <small>API Gemini memiliki limit penggunaan harian untuk tier gratis. Coba lagi nanti atau upgrade ke plan berbayar. Rekomendasi ini menggunakan logika fallback otomatis.</small>
-                                                                                                                                                                                                                                                    </div>` : '')}
+                                                                                                                                                                                                                                                                <i class="bx bx-info-circle"></i> 
+                                                                                                                                                                                                                                                                <strong>⚠️ Quota Gemini Free Tier Habis</strong><br>
+                                                                                                                                                                                                                                                                <small>API Gemini memiliki limit penggunaan harian untuk tier gratis. Coba lagi nanti atau upgrade ke plan berbayar. Rekomendasi ini menggunakan logika fallback otomatis.</small>
+                                                                                                                                                                                                                                                            </div>` : '')}
                 </div>
             `;
 
