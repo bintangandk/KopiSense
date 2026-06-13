@@ -527,38 +527,30 @@ class SensorDataController extends Controller
             }
 
             // Determine temperature status
-            // Normal: 20-28°C | Perlu Perhatian: 19-20°C or 28-29°C | Tidak Sesuai: <19°C or >29°C
+            // Normal: 20-28°C | Bahaya: di luar rentang tersebut
             $tempStatus = 'Normal';
             $tempBadge = 'bg-success';
-            if ($aggregatedData['temperature'] >= 29 || $aggregatedData['temperature'] <= 19) {
-                $tempStatus = 'Tidak Sesuai';
+            if ($aggregatedData['temperature'] < 20 || $aggregatedData['temperature'] > 28) {
+                $tempStatus = 'Bahaya';
                 $tempBadge = 'bg-danger';
-            } elseif (($aggregatedData['temperature'] > 28 && $aggregatedData['temperature'] < 29) || ($aggregatedData['temperature'] >= 19 && $aggregatedData['temperature'] < 20)) {
-                $tempStatus = 'Perlu Perhatian';
-                $tempBadge = 'bg-warning';
             }
 
             // Determine humidity status
-            // Normal: 70-100% | Perlu Perhatian: 70-75% | Tidak Sesuai: <70%
+            // Normal: 70-100% | Bahaya: di luar rentang tersebut
             $humidityStatus = 'Normal';
             $humidityBadge = 'bg-success';
-            if ($aggregatedData['humidity'] < 70) {
-                $humidityStatus = 'Tidak Sesuai';
+            if ($aggregatedData['humidity'] < 70 || $aggregatedData['humidity'] > 100) {
+                $humidityStatus = 'Bahaya';
                 $humidityBadge = 'bg-danger';
-            } elseif ($aggregatedData['humidity'] >= 70 && $aggregatedData['humidity'] < 75) {
-                $humidityStatus = 'Perlu Perhatian';
-                $humidityBadge = 'bg-warning';
             }
 
             // Determine soil pH status
+            // Normal: 5.5-6.5 | Bahaya: di luar rentang tersebut
             $phStatus = 'Normal';
             $phBadge = 'bg-success';
-            if ($aggregatedData['soil_ph'] < 6 || $aggregatedData['soil_ph'] > 8) {
-                $phStatus = 'Tidak Sesuai';
+            if ($aggregatedData['soil_ph'] < 5.5 || $aggregatedData['soil_ph'] > 6.5) {
+                $phStatus = 'Bahaya';
                 $phBadge = 'bg-danger';
-            } elseif ($aggregatedData['soil_ph'] < 6.5 || $aggregatedData['soil_ph'] > 7.5) {
-                $phStatus = 'Perlu Perhatian';
-                $phBadge = 'bg-warning';
             }
 
             return response()->json([
