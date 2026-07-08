@@ -9,6 +9,7 @@ use App\Models\SoilPH;
 use App\Models\Device;
 use App\Models\ControlActions;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 
@@ -101,6 +102,7 @@ class SensorDataController extends Controller
             $mist_duration = $anfisResult['mist_duration'] ?? 0.0;
             $method = $anfisResult['method'] ?? 'ANFIS';
             $score = $anfisResult['skor_anfis'] ?? 0.0;
+            $kategori_detail = $anfisResult['kategori'] ?? null;
 
             // Step 7: Get or create ACTUATOR device for control actions
             $actuatorDevice = $this->getOrCreateActuatorDevice();
@@ -121,6 +123,17 @@ class SensorDataController extends Controller
 
             DB::commit();
 
+            Cache::put('latest_anfis_decision', [
+                'skor_anfis' => $score,
+                'pump_status' => $pump_status,
+                'mist_duration' => $mist_duration,
+                'method' => $method,
+                'kategori_detail' => $kategori_detail,
+                'aggregated_data' => $aggregatedData,
+                'sensor_count' => count($sensorDeviceIds),
+                'timestamp' => now()->toDateTimeString(),
+            ], now()->addHours(24));
+
             return response()->json([
                 'success' => true,
                 'message' => 'Data sensor & tindakan kontrol berhasil disimpan dengan agregasi',
@@ -132,6 +145,7 @@ class SensorDataController extends Controller
                     'method' => $method,
                     'skor_anfis' => $score,
                     'sensor_count' => count($sensorDeviceIds),
+                    'kategori_detail' => $kategori_detail
                 ],
             ], 201);
         } catch (\Exception $e) {
@@ -210,9 +224,10 @@ class SensorDataController extends Controller
         $mist_duration = 0.0;
         $method = 'ANFIS';
         $score = 0.0;
+        $kategori_detail = null;
 
         try {
-            $response = Http::post('http://fuzzy.kopisense.research-ai.my.id/predict', [
+            $response = Http::post('http://127.0.0.1:5001/predict', [
                 'temperature' => $aggregatedData['temperature'],
                 'humidity' => $aggregatedData['humidity'],
                 'soil_ph' => $aggregatedData['soil_ph'],
@@ -223,6 +238,7 @@ class SensorDataController extends Controller
                 $score = $result['skor_anfis'] ?? 0.0;
                 $pump_status = $result['pump_status'] ?? false;
                 $mist_duration = $result['mist_duration'] ?? 0.0;
+                $kategori_detail = $result['kategori'] ?? null;
                 $method = 'ANFIS';
             } else {
                 $method = 'ERROR_FALLBACK';
@@ -241,6 +257,7 @@ class SensorDataController extends Controller
             'mist_duration' => $mist_duration,
             'method' => $method,
             'skor_anfis' => $score,
+            'kategori' => $kategori_detail
         ];
     }
 
@@ -501,6 +518,8 @@ class SensorDataController extends Controller
                 ], 200);
             }
 
+            $cachedDecision = Cache::get('latest_anfis_decision', []);
+
             // Get aggregated sensor data from all SENSOR devices
             $aggregatedData = $this->aggregateSensorData();
             $sensorDeviceCount = Device::where('device_type', 'SENSOR')->count();
@@ -559,6 +578,7 @@ class SensorDataController extends Controller
                     'status' => $status,
                     'status_color' => $statusColor,
                     'status_message' => $statusMessage,
+                    'skor_anfis' => $cachedDecision['skor_anfis'] ?? null,
                     'pump_status' => $latestAction->pump_status,
                     'mist_duration' => $latestAction->mist_duration,
                     'method' => $latestAction->method,
