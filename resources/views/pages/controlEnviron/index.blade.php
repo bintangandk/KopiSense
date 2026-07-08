@@ -76,6 +76,8 @@
                                                     <i class="bx bx-loader-alt bx-spin"></i> Loading
                                                 </h4>
                                                 <small class="text-muted" id="statusMessage">Mengambil data ANFIS...</small>
+                                                <small class="text-muted d-block" id="scoreAnfisLabel">Skor ANFIS: <span
+                                                        id="scoreAnfis">--</span></small>
                                             </div>
                                         </div>
                                     </div>
@@ -345,20 +347,20 @@
 
                     ${data.recommendation_type === 'fallback_quota_exhausted' ? 
                         `<div class="alert alert-danger mt-3 mb-0" role="alert">
-                                                                                                                                                                    <i class="bx bx-error-circle"></i> 
-                                                                                                                                                                        <strong>❌ Quota Gemini Free Tier Habis</strong><br>
-                                                                                                                                                                            <small><strong>Penyebab:</strong> API Gemini memiliki limit request harian untuk tier gratis (limit: 0 reached).<br>
-                                                                                                                                                                                <strong>Solusi:</strong><br>
-                                                                                                                                                                                    1. Coba lagi besok ketika quota reset (24 jam)<br>
-                                                                                                                                                                                    2. Upgrade ke plan berbayar di <a href="https://ai.google.dev" target="_blank">ai.google.dev</a><br>
-                                                                                                                                                                                    3. Gunakan rekomendasi fallback ini sebagai panduan sementara</small>
-                                                                                                                                                                </div>` : 
+                                                                                                                                                                                    <i class="bx bx-error-circle"></i> 
+                                                                                                                                                                                        <strong>❌ Quota Gemini Free Tier Habis</strong><br>
+                                                                                                                                                                                            <small><strong>Penyebab:</strong> API Gemini memiliki limit request harian untuk tier gratis (limit: 0 reached).<br>
+                                                                                                                                                                                                <strong>Solusi:</strong><br>
+                                                                                                                                                                                                    1. Coba lagi besok ketika quota reset (24 jam)<br>
+                                                                                                                                                                                                    2. Upgrade ke plan berbayar di <a href="https://ai.google.dev" target="_blank">ai.google.dev</a><br>
+                                                                                                                                                                                                    3. Gunakan rekomendasi fallback ini sebagai panduan sementara</small>
+                                                                                                                                                                                </div>` : 
                         (data.message && (data.message.includes('429') || data.message.includes('quota') || data.message.includes('Quota')) ? 
                         `<div class="alert alert-warning mt-3 mb-0" role="alert">
-                                                                                                                                                                                                                                                                <i class="bx bx-info-circle"></i> 
-                                                                                                                                                                                                                                                                <strong>⚠️ Quota Gemini Free Tier Habis</strong><br>
-                                                                                                                                                                                                                                                                <small>API Gemini memiliki limit penggunaan harian untuk tier gratis. Coba lagi nanti atau upgrade ke plan berbayar. Rekomendasi ini menggunakan logika fallback otomatis.</small>
-                                                                                                                                                                                                                                                            </div>` : '')}
+                                                                                                                                                                                                                                                                                <i class="bx bx-info-circle"></i> 
+                                                                                                                                                                                                                                                                                <strong>⚠️ Quota Gemini Free Tier Habis</strong><br>
+                                                                                                                                                                                                                                                                                <small>API Gemini memiliki limit penggunaan harian untuk tier gratis. Coba lagi nanti atau upgrade ke plan berbayar. Rekomendasi ini menggunakan logika fallback otomatis.</small>
+                                                                                                                                                                                                                                                                            </div>` : '')}
                 </div>
             `;
 
@@ -395,6 +397,19 @@
                 "'": '&#039;'
             };
             return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        /**
+         * Format ANFIS score for display
+         */
+        function formatAnfisScore(score) {
+            const numericScore = Number(score);
+
+            if (Number.isNaN(numericScore)) {
+                return '--';
+            }
+
+            return numericScore.toFixed(2);
         }
 
         /**
@@ -465,6 +480,7 @@
             statusOverall.textContent = data.status || 'N/A';
 
             document.getElementById('statusMessage').textContent = data.status_message || 'Lingkungan dalam kondisi baik';
+            document.getElementById('scoreAnfis').textContent = formatAnfisScore(data.skor_anfis);
 
             console.log('ANFIS Data loaded successfully:', data);
         }
@@ -500,6 +516,7 @@
             document.getElementById('phBadge').textContent = 'Error';
             document.getElementById('statusOverall').textContent = 'Error';
             document.getElementById('statusMessage').textContent = message;
+            document.getElementById('scoreAnfis').textContent = '--';
         }
 
         /**
