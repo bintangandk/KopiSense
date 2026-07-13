@@ -32,6 +32,11 @@
                                                     <span id="tempValue">--</span> <small>°C</small>
                                                 </h4>
                                                 <small class="text-muted">Target: 20-28°C</small>
+                                                <div class="mt-1">
+                                                    <small class="text-muted d-block">
+                                                        Skor kategori: <span id="tempFuzzyDetail">--</span>
+                                                    </small>
+                                                </div>
                                             </div>
                                         </div>
                                         {{-- Kelembaban Card --}}
@@ -47,6 +52,11 @@
                                                     <span id="humidityValue">--</span> <small>%</small>
                                                 </h4>
                                                 <small class="text-muted">Target: 70-90%</small>
+                                                <div class="mt-1">
+                                                    <small class="text-muted d-block">
+                                                        Skor kategori: <span id="humidityFuzzyDetail">--</span>
+                                                    </small>
+                                                </div>
                                             </div>
                                         </div>
                                         {{-- pH Tanah Card --}}
@@ -62,6 +72,11 @@
                                                     <span id="phValue">--</span>
                                                 </h4>
                                                 <small class="text-muted">Target: 5,5 - 6,5</small>
+                                                <div class="mt-1">
+                                                    <small class="text-muted d-block">
+                                                        Skor kategori: <span id="phFuzzyDetail">--</span>
+                                                    </small>
+                                                </div>
                                             </div>
                                         </div>
                                         {{-- Status Keseluruhan --}}
@@ -136,7 +151,8 @@
                                         <small class="text-uppercase text-muted fw-bold d-block mb-2">Status</small>
                                         <div class="alert mb-0 p-2" id="pumpStatusAlert" role="alert"
                                             style="font-size: 0.9rem;">
-                                            <i class="bx bx-check-circle"></i> <strong id="pumpStatusText">LOADING</strong>
+                                            <i class="bx bx-check-circle"></i> <strong
+                                                id="pumpStatusText">LOADING</strong>
                                         </div>
                                     </div>
 
@@ -347,20 +363,20 @@
 
                     ${data.recommendation_type === 'fallback_quota_exhausted' ? 
                         `<div class="alert alert-danger mt-3 mb-0" role="alert">
-                                                                                                                                                                                    <i class="bx bx-error-circle"></i> 
-                                                                                                                                                                                        <strong>❌ Quota Gemini Free Tier Habis</strong><br>
-                                                                                                                                                                                            <small><strong>Penyebab:</strong> API Gemini memiliki limit request harian untuk tier gratis (limit: 0 reached).<br>
-                                                                                                                                                                                                <strong>Solusi:</strong><br>
-                                                                                                                                                                                                    1. Coba lagi besok ketika quota reset (24 jam)<br>
-                                                                                                                                                                                                    2. Upgrade ke plan berbayar di <a href="https://ai.google.dev" target="_blank">ai.google.dev</a><br>
-                                                                                                                                                                                                    3. Gunakan rekomendasi fallback ini sebagai panduan sementara</small>
-                                                                                                                                                                                </div>` : 
+                                                                                                                                                                                        <i class="bx bx-error-circle"></i> 
+                                                                                                                                                                                            <strong>❌ Quota Gemini Free Tier Habis</strong><br>
+                                                                                                                                                                                                <small><strong>Penyebab:</strong> API Gemini memiliki limit request harian untuk tier gratis (limit: 0 reached).<br>
+                                                                                                                                                                                                    <strong>Solusi:</strong><br>
+                                                                                                                                                                                                        1. Coba lagi besok ketika quota reset (24 jam)<br>
+                                                                                                                                                                                                        2. Upgrade ke plan berbayar di <a href="https://ai.google.dev" target="_blank">ai.google.dev</a><br>
+                                                                                                                                                                                                        3. Gunakan rekomendasi fallback ini sebagai panduan sementara</small>
+                                                                                                                                                                                    </div>` : 
                         (data.message && (data.message.includes('429') || data.message.includes('quota') || data.message.includes('Quota')) ? 
                         `<div class="alert alert-warning mt-3 mb-0" role="alert">
-                                                                                                                                                                                                                                                                                <i class="bx bx-info-circle"></i> 
-                                                                                                                                                                                                                                                                                <strong>⚠️ Quota Gemini Free Tier Habis</strong><br>
-                                                                                                                                                                                                                                                                                <small>API Gemini memiliki limit penggunaan harian untuk tier gratis. Coba lagi nanti atau upgrade ke plan berbayar. Rekomendasi ini menggunakan logika fallback otomatis.</small>
-                                                                                                                                                                                                                                                                            </div>` : '')}
+                                                                                                                                                                                                                                                                                    <i class="bx bx-info-circle"></i> 
+                                                                                                                                                                                                                                                                                    <strong>⚠️ Quota Gemini Free Tier Habis</strong><br>
+                                                                                                                                                                                                                                                                                    <small>API Gemini memiliki limit penggunaan harian untuk tier gratis. Coba lagi nanti atau upgrade ke plan berbayar. Rekomendasi ini menggunakan logika fallback otomatis.</small>
+                                                                                                                                                                                                                                                                                </div>` : '')}
                 </div>
             `;
 
@@ -413,6 +429,38 @@
         }
 
         /**
+         * Resolve the dominant fuzzy category and score from the cached ANFIS details.
+         */
+        function getDominantFuzzyDetail(fuzzyDetails, metric) {
+            const metricDetail = fuzzyDetails?.[metric] ?? fuzzyDetails?.[`${metric}_detail`] ?? null;
+
+            if (!metricDetail) {
+                return '--';
+            }
+
+            if (typeof metricDetail === 'string') {
+                return metricDetail;
+            }
+
+            if (typeof metricDetail !== 'object' || Array.isArray(metricDetail)) {
+                return '--';
+            }
+
+            const entries = Object.entries(metricDetail)
+                .filter(([, value]) => Number.isFinite(Number(value)))
+                .map(([category, value]) => [category, Number(value)]);
+
+            if (!entries.length) {
+                return '--';
+            }
+
+            const maxScore = Math.max(...entries.map(([, value]) => value));
+            const dominantCategory = entries.find(([, value]) => value === maxScore)?.[0] ?? '--';
+
+            return `${dominantCategory} (${maxScore.toFixed(2)})`;
+        }
+
+        /**
          * Fetch latest ANFIS prediction and update UI
          */
         function loadAnfisData() {
@@ -441,24 +489,28 @@
          */
         function updateAnfisDisplay(data) {
             const aggData = data.aggregated_data || {};
+            const fuzzyDetails = data.fuzzy_details || {};
 
             // Update Temperature
             document.getElementById('tempValue').textContent = aggData.temperature ?? '--';
             const tempBadge = document.getElementById('tempBadge');
             tempBadge.textContent = aggData.temperature_status || 'N/A';
             tempBadge.className = `badge ${aggData.temperature_badge || 'bg-secondary'}`;
+            document.getElementById('tempFuzzyDetail').textContent = getDominantFuzzyDetail(fuzzyDetails, 'temperature');
 
             // Update Humidity
             document.getElementById('humidityValue').textContent = aggData.humidity ?? '--';
             const humidityBadge = document.getElementById('humidityBadge');
             humidityBadge.textContent = aggData.humidity_status || 'N/A';
             humidityBadge.className = `badge ${aggData.humidity_badge || 'bg-secondary'}`;
+            document.getElementById('humidityFuzzyDetail').textContent = getDominantFuzzyDetail(fuzzyDetails, 'humidity');
 
             // Update Soil pH
             document.getElementById('phValue').textContent = aggData.soil_ph ?? '--';
             const phBadge = document.getElementById('phBadge');
             phBadge.textContent = aggData.soil_ph_status || 'N/A';
             phBadge.className = `badge ${aggData.soil_ph_badge || 'bg-secondary'}`;
+            document.getElementById('phFuzzyDetail').textContent = getDominantFuzzyDetail(fuzzyDetails, 'soil_ph');
 
             // Update Overall Status
             const statusContainer = document.getElementById('statusOverallContainer');
@@ -510,10 +562,13 @@
         function showAnfisError(message) {
             document.getElementById('tempValue').textContent = '--';
             document.getElementById('tempBadge').textContent = 'Error';
+            document.getElementById('tempFuzzyDetail').textContent = '--';
             document.getElementById('humidityValue').textContent = '--';
             document.getElementById('humidityBadge').textContent = 'Error';
+            document.getElementById('humidityFuzzyDetail').textContent = '--';
             document.getElementById('phValue').textContent = '--';
             document.getElementById('phBadge').textContent = 'Error';
+            document.getElementById('phFuzzyDetail').textContent = '--';
             document.getElementById('statusOverall').textContent = 'Error';
             document.getElementById('statusMessage').textContent = message;
             document.getElementById('scoreAnfis').textContent = '--';
