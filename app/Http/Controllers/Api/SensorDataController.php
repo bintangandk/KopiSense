@@ -489,7 +489,7 @@ class SensorDataController extends Controller
                 },
                 'soil_ph' => match ($dominantCategory) {
                     'rendah' => 'bg-danger',
-                    'sedang' => 'bg-success',
+                    'sedang' => 'bg-info',
                     'tinggi' => 'bg-warning',
                     default  => 'bg-success',
                 },
